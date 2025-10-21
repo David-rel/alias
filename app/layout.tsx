@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import Image from "next/image";
 import "./globals.css";
 
 const deploymentUrl = process.env.NEXT_PUBLIC_SITE_URL;
@@ -46,7 +45,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/photos/dark/logoHorizontal.png",
+        url: "/photos/light/logoClear.png",
         width: 500,
         height: 500,
         alt: "Alias transparent logo",
@@ -59,7 +58,7 @@ export const metadata: Metadata = {
     description,
     site: "@alias",
     creator: "@alias",
-    images: ["/photos/dark/logoHorizontal.png"],
+    images: ["/photos/light/logoClear.png"],
   },
   robots: {
     index: true,
@@ -93,13 +92,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>
-      <head>
-        <link rel="icon" href="photos/light/logo.png" style={{ borderRadius: "50%" }} />
-      </head>
-        <main>
-          {children}
-        </main>
+      <body className="bg-neutral-950 text-neutral-100 antialiased">
+        {children}
       </body>
     </html>
   );
