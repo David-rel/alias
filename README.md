@@ -1,36 +1,40 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## Alias
 
-## Getting Started
+AI-connected operating system for modern small businesses. The app unifies websites, payroll, marketing automation, and MCP-driven workflows under a single control center.
 
-First, run the development server:
+## Branding Palette
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+| Mode       | Hex      | Notes                               |
+|------------|----------|-------------------------------------|
+| Dark base  | `#03162d`| Primary dark background             |
+| Light base | `#ffffff`| Primary light background            |
+| Core 01    | `#0064d6`| Deep Alias blue                     |
+| Core 02    | `#23a5fe`| Accent blue for calls to action     |
+| Core 03    | `#3eb6fd`| Supporting gradient layer           |
+| Support    | `#000000`/`#ffffff` | Text and inverse surfaces |
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Future UI work should build gradients and accents around these values to preserve brand consistency.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Current App Setup
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Layout metadata in `app/layout.tsx` seeds Open Graph, Twitter, and canonical tags, and renders the `logoClear` hero header.
+- `next-sitemap` generates static `sitemap.xml`/`robots.txt` during `npm run build`. Set `NEXT_PUBLIC_SITE_URL` (for example `https://alias.app`) to emit correct absolute URLs.
+- `scripts/trim-pngs.js` trims transparent padding from PNG assets using Sharp, helping keep logos and UI elements tight.
 
-## Learn More
+## Required Environment
 
-To learn more about Next.js, take a look at the following resources:
+Copy `.env` as needed and provide production credentials. The sitemap and robots routes fall back to `https://alias.app` when `NEXT_PUBLIC_SITE_URL` is absent.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Commands
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `npm run dev` – start the Turbopack dev server on port 3000.
+- `npm run build` – produce a production build (`next build --turbopack`) and regenerate sitemap outputs.
+- `npm run start` – serve the production build.
+- `npm run lint` – run ESLint with the Next config.
+- `npm run trim:pngs` – trim all PNGs under `public` (pass a directory with `npm run trim:pngs -- path/to/dir`).
 
-## Deploy on Vercel
+## Next Steps
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Flesh out `app/page.tsx` with the first customer-facing flows.
+- Add each new route to public navigation and ensure the sitemap captures it.
+- Expand component styling to incorporate the brand palette and dark/light modes.
