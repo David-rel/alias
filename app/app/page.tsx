@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 export const metadata = {
   title: "Alias Dashboard",
@@ -12,7 +15,13 @@ const quickLinks = [
   { label: "Plan marketing sprint", href: "/app/campaigns" },
 ];
 
-export default function AppHome() {
+export default async function AppHome() {
+  const session = await getServerSession(authOptions);
+
+  if (session?.user?.onboardingCompleted === false) {
+    redirect("/app/onboarding");
+  }
+
   return (
     <div className="space-y-12">
       <header className="rounded-3xl border border-white/10 bg-neutral-900/80 px-8 py-10 text-neutral-100">

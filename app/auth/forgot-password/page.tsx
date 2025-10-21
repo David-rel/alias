@@ -1,12 +1,22 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import ForgotPasswordForm from "./ForgotPasswordForm";
 
 export const metadata = {
   title: "Reset your Alias password",
 };
 
-export default function ForgotPasswordPage() {
-  const inputClass =
-    "mt-2 w-full rounded-xl border border-white/10 bg-neutral-900/80 px-4 py-3 text-sm text-neutral-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] outline-none transition focus:border-[#23a5fe] focus:ring-2 focus:ring-[#23a5fe]/40";
+export default async function ForgotPasswordPage() {
+  const session = await getServerSession(authOptions);
+
+  if (session?.user?.id) {
+    if (session.user.onboardingCompleted === false) {
+      redirect("/app/onboarding");
+    }
+    redirect("/app");
+  }
 
   return (
     <div className="space-y-8">
@@ -23,23 +33,7 @@ export default function ForgotPasswordPage() {
         </p>
       </div>
 
-      <form className="space-y-5">
-        <label className="block text-left">
-          <span className="text-sm text-neutral-300">Email</span>
-          <input
-            type="email"
-            placeholder="you@business.com"
-            autoComplete="email"
-            className={inputClass}
-          />
-        </label>
-        <button
-          type="submit"
-          className="w-full rounded-xl bg-gradient-to-r from-[#0064d6] via-[#23a5fe] to-[#3eb6fd] px-5 py-3 text-sm font-semibold text-neutral-950 shadow-[0_12px_30px_rgba(35,165,254,0.35)] transition hover:brightness-110"
-        >
-          Email reset link
-        </button>
-      </form>
+      <ForgotPasswordForm />
 
       <p className="text-center text-sm text-neutral-400">
         Remembered your credentials?{" "}
