@@ -176,3 +176,72 @@ export async function sendPasswordResetEmail({
     `,
   });
 }
+
+type TeamInviteEmailPayload = {
+  recipient: string;
+  inviterName: string;
+  businessName: string;
+  role: "admin" | "guest";
+  resetCode: string;
+  expiresAt: Date;
+};
+
+export async function sendTeamInviteEmail({
+  recipient,
+  inviterName,
+  businessName,
+  role,
+  resetCode,
+  expiresAt,
+}: TeamInviteEmailPayload) {
+  const resetUrl = `${baseUrl()}/auth/reset?code=${encodeURIComponent(resetCode)}`;
+  const fromAddress = emailFrom ?? gmailUser ?? smtpUser ?? "no-reply@alias.app";
+  const roleLabel = role === "admin" ? "Admin" : "Guest";
+  const expiresLabel = expiresAt.toUTCString();
+
+  if (!emailDeliveryConfigured()) {
+    console.warn(
+      "[email] Delivery skipped – configure GMAIL_USER/GMAIL_PASS or SMTP_HOST/SMTP_USER/SMTP_PASS to enable sending.",
+    );
+    console.info(
+      `[email] Team invite for ${recipient}: ${resetUrl} (role: ${roleLabel}, invited by ${inviterName})`,
+    );
+    return;
+  }
+
+  const transport = getTransporter();
+
+  await transport.sendMail({
+    from: fromAddress,
+    to: recipient,
+    subject: `${inviterName} invited you to ${businessName} on Alias`,
+    text: [
+      `${inviterName} invited you to join ${businessName} on Alias as a ${roleLabel}.`,
+      "",
+      "Set your password to get started:",
+      resetUrl,
+      "",
+      `This link expires on ${expiresLabel}. If you weren’t expecting this invitation you can ignore it.`,
+    ].join("\n"),
+    html: `
+      <div style="font-family: sans-serif; line-height: 1.5; color: #0f172a;">
+        <h1 style="font-size: 24px; margin-bottom: 16px;">You're invited to ${businessName}</h1>
+        <p style="margin: 0 0 12px;">
+          ${inviterName} added you as a <strong>${roleLabel}</strong> on Alias. Set your password to jump in.
+        </p>
+        <p style="margin: 0 0 24px;">
+          <a href="${resetUrl}" style="display: inline-block; padding: 12px 20px; border-radius: 999px; background: linear-gradient(90deg,#0064d6,#23a5fe,#3eb6fd); text-decoration: none; color: #0b1120; font-weight: 600;">
+            Set password & sign in
+          </a>
+        </p>
+        <p style="margin: 0 0 16px;">
+          Or copy and paste this link into your browser:<br/>
+          <a href="${resetUrl}">${resetUrl}</a>
+        </p>
+        <p style="margin: 0; font-size: 12px; color: #475569;">
+          This link expires on ${expiresLabel}. If you weren’t expecting this invitation you can ignore it.
+        </p>
+      </div>
+    `,
+  });
+}

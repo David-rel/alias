@@ -44,3 +44,30 @@ export type DbUserRow = {
   created_at: Date;
   updated_at: Date;
 };
+
+export type DbBusinessRow = {
+  id: string;
+  owner_user_id: string;
+  business_category: string | null;
+  industry: string | null;
+  description: string | null;
+  logo_path: string | null;
+  company_size: string | null;
+  location: string | null;
+  feature_preferences: string[];
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type DbBusinessTeamMemberRow = {
+  id: string;
+  business_id: string;
+  user_id: string | null;
+  email: string;
+  role: "owner" | "admin" | "guest";
+  invite_status: "pending" | "accepted" | "declined";
+  invited_at: Date;
+  joined_at: Date | null;
+  created_at: Date;
+  updated_at: Date;
+};

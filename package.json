@@ -4,13 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
+    "build": "node scripts/migrate.mjs && next build --turbopack",
     "postbuild": "next-sitemap",
     "start": "next start",
     "lint": "eslint",
     "migrate": "node scripts/migrate.mjs"
   },
   "dependencies": {
+    "@vercel/blob": "^0.23.1",
     "bcryptjs": "^3.0.2",
     "next": "15.5.6",
     "next-auth": "^4.24.11",
