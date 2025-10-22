@@ -1,7 +1,8 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { query } from "@/lib/db";
+import { DashboardShell } from "@/components/app/DashboardShell";
 
 export const metadata = {
   title: "Alias Dashboard",
@@ -9,63 +10,115 @@ export const metadata = {
     "Your connected workspace for operations, finance, and marketing automation.",
 };
 
-const quickLinks = [
-  { label: "View pipeline", href: "/app/pipeline" },
-  { label: "Run payroll", href: "/app/payroll" },
-  { label: "Plan marketing sprint", href: "/app/campaigns" },
-];
-
 export default async function AppHome() {
   const session = await getServerSession(authOptions);
 
-  if (session?.user?.onboardingCompleted === false) {
+  if (!session?.user?.id) {
+    redirect("/auth/login");
+  }
+
+  if (session.user.onboardingCompleted === false) {
     redirect("/app/onboarding");
   }
 
+  const userId = session.user.id;
+
+  type BusinessRecord = {
+    id: string;
+    business_category: string | null;
+    industry: string | null;
+    description: string | null;
+    logo_path: string | null;
+    company_size: string | null;
+    location: string | null;
+    feature_preferences: string[];
+    company_name: string | null;
+  };
+
+  type BusinessContext = BusinessRecord & {
+    role: "owner" | "admin" | "guest";
+  };
+
+  const ownerBusiness = await query<BusinessRecord>(
+    `SELECT b.id,
+            b.business_category,
+            b.industry,
+            b.description,
+            b.logo_path,
+            b.company_size,
+            b.location,
+            b.feature_preferences,
+            u.company_name
+       FROM businesses b
+       LEFT JOIN users u ON u.id = b.owner_user_id
+      WHERE b.owner_user_id = $1
+      LIMIT 1`,
+    [userId],
+  );
+
+  let business: BusinessContext | null = ownerBusiness.rows[0]
+    ? {
+        ...ownerBusiness.rows[0],
+        role: "owner",
+      }
+    : null;
+
+  if (!business) {
+    const memberBusiness = await query<BusinessRecord & {
+      role: "owner" | "admin" | "guest" | null;
+    }>(
+      `SELECT b.id,
+              b.business_category,
+              b.industry,
+              b.description,
+              b.logo_path,
+              b.company_size,
+              b.location,
+              b.feature_preferences,
+              u.company_name,
+              COALESCE(m.role, 'guest') AS role
+         FROM business_team_members m
+         JOIN businesses b ON b.id = m.business_id
+         LEFT JOIN users u ON u.id = b.owner_user_id
+        WHERE m.user_id = $1
+        ORDER BY m.invited_at ASC
+        LIMIT 1`,
+      [userId],
+    );
+
+    const memberRow = memberBusiness.rows[0];
+    if (memberRow) {
+      business = {
+        ...memberRow,
+        role: memberRow.role ?? "guest",
+      };
+    }
+  }
+
+  const companyName =
+    business?.company_name ?? session.user.name ?? session.user.email ?? "Alias workspace";
+
+  const userName = session.user.name ?? null;
+  const userEmail = session.user.email ?? "";
+
+  const userInitials = userName
+    ? userName
+        .split(" ")
+        .filter(Boolean)
+        .map((part) => part[0] ?? "")
+        .join("")
+        .slice(0, 2)
+        .toUpperCase()
+    : userEmail.slice(0, 2).toUpperCase();
+
   return (
-    <div className="space-y-12">
-      <header className="rounded-3xl border border-white/10 bg-neutral-900/80 px-8 py-10 text-neutral-100">
-        <h1 className="text-3xl font-semibold tracking-tight">
-          Welcome back to Alias
-        </h1>
-        <p className="mt-3 max-w-2xl text-sm text-neutral-400">
-          This dashboard will aggregate mission-critical insights once
-          authentication is connected. For now use the quick links below to
-          sketch the core product areas.
-        </p>
-      </header>
-
-      <section className="grid gap-6 md:grid-cols-3">
-        {quickLinks.map((link) => (
-          <Link
-            key={link.href}
-            href={link.href}
-            className="rounded-3xl border border-white/10 bg-neutral-900/40 p-6 text-neutral-200 transition hover:border-[#23a5fe]/60 hover:bg-[#03162d]/80"
-          >
-            <p className="text-base font-medium text-neutral-100">
-              {link.label}
-            </p>
-            <p className="mt-2 text-sm text-neutral-400">
-              Placeholder route. Wire actual modules to expose authenticated
-              tooling.
-            </p>
-          </Link>
-        ))}
-      </section>
-
-      <section className="rounded-3xl border border-white/10 bg-[#03162d] p-8 text-white">
-        <h2 className="text-xl font-semibold">Next steps</h2>
-        <ul className="mt-4 list-disc space-y-2 pl-6 text-sm text-white/80">
-          <li>Hook up authentication guards to restrict access to `/app/*`.</li>
-          <li>
-            Connect MCP agents to orchestrate workflows from the central queue.
-          </li>
-          <li>
-            Streamline notifications so teams can approve automations in real
-            time.
-          </li>
-        </ul>
-      </section>
-    </div>
+    <DashboardShell
+      companyName={companyName}
+      role={(business?.role ?? "owner")}
+      logoPath={business?.logo_path ?? null}
+      userName={userName}
+      userEmail={userEmail}
+      userInitials={userInitials || "A"}
+    />
   );
 }

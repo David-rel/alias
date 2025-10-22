@@ -1,7 +1,7 @@
 import type { NextAuthOptions, User } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
-import { query, type DbUserRow } from "./db";
+import { query, pool, type DbUserRow } from "./db";
 
 async function findUserByEmail(email: string) {
   const result = await query<DbUserRow>("SELECT * FROM users WHERE email = $1", [
@@ -60,6 +60,40 @@ export const authOptions: NextAuthOptions = {
 
         if (!user.email_verified) {
           throw new Error("EMAIL_NOT_VERIFIED");
+        }
+
+        try {
+          const client = await pool.connect();
+          try {
+            const existing = await client.query<{ role: string | null }>(
+              `SELECT role
+                 FROM business_team_members
+                WHERE (user_id = $1 OR LOWER(email) = $2)
+                ORDER BY invited_at DESC
+                LIMIT 1`,
+              [user.id, normalizedEmail],
+            );
+
+            if (existing.rowCount && existing.rows.length) {
+              const currentRole = existing.rows[0].role;
+              const safeRole = currentRole === "owner" || currentRole === "admin" ? currentRole : "guest";
+
+              await client.query(
+                `UPDATE business_team_members
+                   SET invite_status = 'accepted',
+                       joined_at = COALESCE(joined_at, NOW()),
+                       user_id = COALESCE(user_id, $1),
+                       role = $3
+                 WHERE invite_status <> 'accepted'
+                   AND (user_id = $1 OR LOWER(email) = $2)`,
+                [user.id, normalizedEmail, safeRole],
+              );
+            }
+          } finally {
+            client.release();
+          }
+        } catch (error) {
+          console.error("Failed to mark team invite as accepted", error);
         }
 
         const safeUser: AuthenticatedUser = {
