@@ -14,7 +14,10 @@ export const pool = new Pool({
     : undefined,
 });
 
-type QueryParam = string | number | boolean | Date | null;
+type PrimitiveParam = string | number | boolean | Date | null;
+type ArrayParam = string[] | number[] | boolean[] | Date[];
+
+type QueryParam = PrimitiveParam | ArrayParam;
 
 export async function query<T extends QueryResultRow = QueryResultRow>(
   text: string,
