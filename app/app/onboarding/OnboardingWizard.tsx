@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -80,7 +80,11 @@ const featureOptions = [
 ];
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i;
-const teamRoleOptions: { value: TeamMemberRole; label: string; description: string }[] = [
+const teamRoleOptions: {
+  value: TeamMemberRole;
+  label: string;
+  description: string;
+}[] = [
   {
     value: "admin",
     label: "Admin",
@@ -184,7 +188,9 @@ export function OnboardingWizard() {
 
         if (payload.teamMembers?.length) {
           setExistingInvites(
-            payload.teamMembers.filter((member) => member.inviteStatus !== "accepted"),
+            payload.teamMembers.filter(
+              (member) => member.inviteStatus !== "accepted"
+            )
           );
         } else {
           setExistingInvites([]);
@@ -192,7 +198,9 @@ export function OnboardingWizard() {
       } catch (loadError) {
         console.error(loadError);
         if (active) {
-          setError("We couldn't load your onboarding progress. Please refresh.");
+          setError(
+            "We couldn't load your onboarding progress. Please refresh."
+          );
         }
       } finally {
         if (active) {
@@ -233,7 +241,7 @@ export function OnboardingWizard() {
   function updateTeamMember(
     index: number,
     field: keyof TeamMemberInput,
-    value: string,
+    value: string
   ) {
     setTeamMembers((prev) =>
       prev.map((member, memberIndex) => {
@@ -247,7 +255,7 @@ export function OnboardingWizard() {
         }
 
         return { ...member, [field]: value };
-      }),
+      })
     );
   }
 
@@ -256,7 +264,9 @@ export function OnboardingWizard() {
   }
 
   function removeTeamMember(index: number) {
-    setTeamMembers((prev) => prev.filter((_, memberIndex) => memberIndex !== index));
+    setTeamMembers((prev) =>
+      prev.filter((_, memberIndex) => memberIndex !== index)
+    );
   }
 
   async function handleBusinessStep() {
@@ -298,12 +308,19 @@ export function OnboardingWizard() {
         throw new Error(
           typeof payload.error === "string"
             ? payload.error
-            : "Unable to save your business details.",
+            : "Unable to save your business details."
         );
       }
 
       const payload = (await response.json()) as {
         business?: { logoPath: string | null; featurePreferences: string[] };
+        plan?: {
+          planId: string;
+          planName: string;
+          status: string;
+          paymentProvider: string | null;
+          currentPeriodEnd: string | null;
+        };
       };
 
       if (payload.business?.logoPath) {
@@ -322,7 +339,7 @@ export function OnboardingWizard() {
       setError(
         submitError instanceof Error
           ? submitError.message
-          : "We couldn't save your business details. Try again.",
+          : "We couldn't save your business details. Try again."
       );
     } finally {
       setIsLoading(false);
@@ -352,7 +369,7 @@ export function OnboardingWizard() {
         throw new Error(
           typeof payload.error === "string"
             ? payload.error
-            : "Unable to save your feature preferences.",
+            : "Unable to save your feature preferences."
         );
       }
 
@@ -362,7 +379,7 @@ export function OnboardingWizard() {
       setError(
         submitError instanceof Error
           ? submitError.message
-          : "We couldn't save your feature preferences. Try again.",
+          : "We couldn't save your feature preferences. Try again."
       );
     } finally {
       setIsLoading(false);
@@ -391,11 +408,13 @@ export function OnboardingWizard() {
     }
 
     const invalidMember = preparedMembers.find(
-      (member) => !EMAIL_REGEX.test(member.email),
+      (member) => !EMAIL_REGEX.test(member.email)
     );
 
     if (invalidMember) {
-      setError(`"${invalidMember.email}" doesn't look like a valid email address.`);
+      setError(
+        `"${invalidMember.email}" doesn't look like a valid email address.`
+      );
       return;
     }
 
@@ -409,7 +428,9 @@ export function OnboardingWizard() {
     });
 
     if (duplicate) {
-      setError(`"${duplicate.email}" is listed more than once. Remove duplicates to continue.`);
+      setError(
+        `"${duplicate.email}" is listed more than once. Remove duplicates to continue.`
+      );
       return;
     }
 
@@ -432,7 +453,7 @@ export function OnboardingWizard() {
         throw new Error(
           typeof payload.error === "string"
             ? payload.error
-            : "Unable to invite your teammates.",
+            : "Unable to invite your teammates."
         );
       }
 
@@ -442,7 +463,9 @@ export function OnboardingWizard() {
 
       if (payload.teamMembers) {
         setExistingInvites(
-          payload.teamMembers.filter((member) => member.inviteStatus !== "accepted"),
+          payload.teamMembers.filter(
+            (member) => member.inviteStatus !== "accepted"
+          )
         );
       }
 
@@ -455,7 +478,7 @@ export function OnboardingWizard() {
       setError(
         submitError instanceof Error
           ? submitError.message
-          : "We couldn't finish onboarding. Try again.",
+          : "We couldn't finish onboarding. Try again."
       );
     } finally {
       setIsLoading(false);
@@ -482,7 +505,7 @@ export function OnboardingWizard() {
     setSelectedFeatures((prev) =>
       prev.includes(featureId)
         ? prev.filter((id) => id !== featureId)
-        : [...prev, featureId],
+        : [...prev, featureId]
     );
   }
 
@@ -498,8 +521,8 @@ export function OnboardingWizard() {
           Let&apos;s finish setting things up
         </h1>
         <p className="mt-2 max-w-2xl text-sm text-neutral-400">
-          Complete these three quick steps so we can personalize your workspace and
-          get your team collaborating faster.
+          Complete these three quick steps so we can personalize your workspace
+          and get your team collaborating faster.
         </p>
       </header>
 
@@ -552,7 +575,9 @@ export function OnboardingWizard() {
                           className={inputClass}
                           placeholder="Agency, SaaS, E-commerce..."
                           value={businessCategory}
-                          onChange={(event) => setBusinessCategory(event.target.value)}
+                          onChange={(event) =>
+                            setBusinessCategory(event.target.value)
+                          }
                           disabled={isLoading}
                         />
                       </label>
@@ -588,11 +613,15 @@ export function OnboardingWizard() {
 
                     <div className="grid gap-6 md:grid-cols-2">
                       <label className="block">
-                        <span className="text-sm text-neutral-300">Company size</span>
+                        <span className="text-sm text-neutral-300">
+                          Company size
+                        </span>
                         <select
                           className={inputClass}
                           value={companySize}
-                          onChange={(event) => setCompanySize(event.target.value)}
+                          onChange={(event) =>
+                            setCompanySize(event.target.value)
+                          }
                           disabled={isLoading}
                         >
                           <option value="">Select size</option>
@@ -605,7 +634,9 @@ export function OnboardingWizard() {
                       </label>
 
                       <label className="block">
-                        <span className="text-sm text-neutral-300">Where are you based?</span>
+                        <span className="text-sm text-neutral-300">
+                          Where are you based?
+                        </span>
                         <input
                           type="text"
                           className={inputClass}
@@ -623,7 +654,8 @@ export function OnboardingWizard() {
                           Upload your logo
                         </p>
                         <p className="mt-1 text-xs text-neutral-400">
-                          Recommended: square PNG, JPG, SVG, or WEBP no larger than 5MB.
+                          Recommended: square PNG, JPG, SVG, or WEBP no larger
+                          than 5MB.
                         </p>
                         <input
                           type="file"
@@ -682,11 +714,14 @@ export function OnboardingWizard() {
                 ) : (
                   <>
                     <p className="text-sm text-neutral-300">
-                      Select the features you&apos;re most excited to activate first. We&apos;ll recommend a tailored setup plan.
+                      Select the features you&apos;re most excited to activate
+                      first. We&apos;ll recommend a tailored setup plan.
                     </p>
                     <div className="grid gap-4 md:grid-cols-2">
                       {featureOptions.map((feature) => {
-                        const isSelected = selectedFeatures.includes(feature.id);
+                        const isSelected = selectedFeatures.includes(
+                          feature.id
+                        );
                         return (
                           <button
                             type="button"
@@ -699,7 +734,9 @@ export function OnboardingWizard() {
                             }`}
                             disabled={isLoading}
                           >
-                            <p className="font-semibold text-white">{feature.label}</p>
+                            <p className="font-semibold text-white">
+                              {feature.label}
+                            </p>
                             <p className="mt-2 text-sm text-neutral-400">
                               {feature.description}
                             </p>
@@ -719,7 +756,8 @@ export function OnboardingWizard() {
 
               <div className="min-w-full space-y-6 p-6 md:p-8">
                 <p className="text-sm text-neutral-300">
-                  Invite the teammates who will collaborate inside Alias. We&apos;ll send invites and keep you posted as they join.
+                  Invite the teammates who will collaborate inside Alias.
+                  We&apos;ll send invites and keep you posted as they join.
                 </p>
 
                 <div className="space-y-4">
@@ -764,7 +802,7 @@ export function OnboardingWizard() {
                         <p className="mt-2 text-xs text-neutral-500">
                           {
                             teamRoleOptions.find(
-                              (option) => option.value === member.role,
+                              (option) => option.value === member.role
                             )?.description
                           }
                         </p>
@@ -799,7 +837,10 @@ export function OnboardingWizard() {
                     </p>
                     <ul className="mt-3 space-y-2 text-sm text-neutral-300">
                       {existingInvites.map((invite) => (
-                        <li key={invite.id} className="flex items-center justify-between">
+                        <li
+                          key={invite.id}
+                          className="flex items-center justify-between"
+                        >
                           <div>
                             <p>{invite.email}</p>
                             <p className="text-xs text-neutral-500">
@@ -842,8 +883,8 @@ export function OnboardingWizard() {
               {isLoading
                 ? "Saving..."
                 : currentStep === stepDefinitions.length - 1
-                  ? "Finish onboarding"
-                  : "Save & continue"}
+                ? "Finish onboarding"
+                : "Save & continue"}
             </button>
           </div>
         </div>

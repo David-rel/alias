@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -13,6 +13,7 @@ type Props = {
   userName: string | null;
   userEmail: string;
   userInitials: string;
+  profileImageUrl: string | null;
   onMobileMenuToggle?: () => void;
 };
 
@@ -24,6 +25,7 @@ export function Topbar({
   userName,
   userEmail,
   userInitials,
+  profileImageUrl,
   onMobileMenuToggle,
 }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -67,7 +69,9 @@ export function Topbar({
       ? "bg-white/70 text-neutral-800"
       : "bg-neutral-900/60 text-neutral-100";
   const buttonBorder =
-    theme === "light" ? "border-neutral-200/70 text-neutral-600" : "border-white/10 text-neutral-200";
+    theme === "light"
+      ? "border-neutral-200/70 text-neutral-600"
+      : "border-white/10 text-neutral-200";
   const buttonHover =
     theme === "light"
       ? "hover:border-[#23a5fe]/80 hover:text-[#0f1f3a]"
@@ -84,7 +88,9 @@ export function Topbar({
       ? "border-neutral-200/70 bg-white text-neutral-700 shadow-xl"
       : "border-white/10 bg-neutral-900/95 text-neutral-200 shadow-2xl";
   const pillBorder =
-    theme === "light" ? "border-neutral-200/70 bg-neutral-100/60 text-neutral-700" : "border-white/10 bg-white/5 text-white";
+    theme === "light"
+      ? "border-neutral-200/70 bg-neutral-100/60 text-neutral-700"
+      : "border-white/10 bg-white/5 text-white";
   const menuItemHover =
     theme === "light"
       ? "hover:bg-[#f0f4ff] hover:text-[#061943]"
@@ -102,7 +108,9 @@ export function Topbar({
         <p className="text-xs uppercase tracking-[0.3em] text-neutral-500">
           Workspace
         </p>
-        <p className="mt-1 text-base font-semibold text-current">{companyName}</p>
+        <p className="mt-1 text-base font-semibold text-current">
+          {companyName}
+        </p>
         <span
           className={`mt-2 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${pillBorder}`}
         >
@@ -128,7 +136,11 @@ export function Topbar({
           onClick={onThemeToggle}
           className={`flex h-10 w-10 items-center justify-center rounded-full border text-lg transition ${buttonBorder} ${buttonBackground} ${buttonHover}`}
         >
-          {theme === "dark" ? <FiMoon className="text-base" /> : <FiSun className="text-base" />}
+          {theme === "dark" ? (
+            <FiMoon className="text-base" />
+          ) : (
+            <FiSun className="text-base" />
+          )}
         </button>
 
         <div className="relative" ref={menuRef}>
@@ -137,7 +149,16 @@ export function Topbar({
             onClick={handleMenuToggle}
             className={`flex h-10 w-10 items-center justify-center rounded-full border text-sm font-semibold shadow-[0_6px_20px_rgba(35,165,254,0.25)] transition hover:border-[#3eb6fd]/80 ${avatarBorder} ${avatarBg}`}
           >
-            {userInitials}
+            {profileImageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={profileImageUrl}
+                alt="Profile"
+                className="h-full w-full rounded-full object-cover"
+              />
+            ) : (
+              userInitials
+            )}
           </button>
 
           {menuOpen ? (

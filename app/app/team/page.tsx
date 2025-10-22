@@ -60,7 +60,7 @@ export default async function TeamPage() {
        LEFT JOIN users u ON u.id = b.owner_user_id
       WHERE b.owner_user_id = $1
       LIMIT 1`,
-    [userId],
+    [userId]
   );
 
   let business = ownerBusiness.rows[0] ?? null;
@@ -86,17 +86,29 @@ export default async function TeamPage() {
         WHERE m.user_id = $1
         ORDER BY m.invited_at ASC
         LIMIT 1`,
-      [userId],
+      [userId]
     );
 
     business = memberBusiness.rows[0] ?? null;
     const candidateRole = memberBusiness.rows[0]?.viewer_role ?? null;
-    viewerRole = candidateRole === "owner" || candidateRole === "admin" || candidateRole === "guest"
-      ? candidateRole
-      : "guest";
+    viewerRole =
+      candidateRole === "owner" ||
+      candidateRole === "admin" ||
+      candidateRole === "guest"
+        ? candidateRole
+        : "guest";
   }
 
   if (!business) {
+    // Fetch user profile image
+    const userProfileResult = await query<{ profile_image_url: string | null }>(
+      `SELECT profile_image_url FROM users WHERE id = $1 LIMIT 1`,
+      [session.user.id]
+    );
+
+    const profileImageUrl =
+      userProfileResult.rows[0]?.profile_image_url ?? null;
+
     return (
       <DashboardShell
         companyName="Alias workspace"
@@ -104,14 +116,19 @@ export default async function TeamPage() {
         logoPath={null}
         userName={session.user.name ?? null}
         userEmail={session.user.email ?? ""}
-        userInitials={(session.user.name ?? session.user.email ?? "Alias").slice(0, 2).toUpperCase()}
+        userInitials={(session.user.name ?? session.user.email ?? "Alias")
+          .slice(0, 2)
+          .toUpperCase()}
+        profileImageUrl={profileImageUrl}
       >
         <div className="flex min-h-[60vh] items-center justify-center rounded-3xl border border-white/10 bg-neutral-900/80 p-12 text-center text-neutral-200">
           <div>
-            <h1 className="text-2xl font-semibold text-white">No workspace yet</h1>
+            <h1 className="text-2xl font-semibold text-white">
+              No workspace yet
+            </h1>
             <p className="mt-3 text-sm text-neutral-400">
-              Once you complete onboarding and create a workspace you&apos;ll see your teammates
-              listed here.
+              Once you complete onboarding and create a workspace you&apos;ll
+              see your teammates listed here.
             </p>
           </div>
         </div>
@@ -133,7 +150,7 @@ export default async function TeamPage() {
       ORDER BY
         CASE WHEN m.role = 'owner' THEN 0 WHEN m.role = 'admin' THEN 1 ELSE 2 END,
         m.invited_at ASC`,
-    [business.id],
+    [business.id]
   );
 
   const teamMembers = teamMembersResult.rows;
@@ -148,14 +165,25 @@ export default async function TeamPage() {
     .slice(0, 2)
     .toUpperCase();
 
+  // Fetch user profile image
+  const userProfileResult = await query<{ profile_image_url: string | null }>(
+    `SELECT profile_image_url FROM users WHERE id = $1 LIMIT 1`,
+    [session.user.id]
+  );
+
+  const profileImageUrl = userProfileResult.rows[0]?.profile_image_url ?? null;
+
   return (
     <DashboardShell
-      companyName={business.company_name ?? business.business_category ?? "Alias workspace"}
+      companyName={
+        business.company_name ?? business.business_category ?? "Alias workspace"
+      }
       role={viewerRole}
       logoPath={business.logo_path}
       userName={shellUserName}
       userEmail={shellUserEmail}
       userInitials={shellInitials || "A"}
+      profileImageUrl={profileImageUrl}
     >
       <TeamManager
         viewerRole={viewerRole}

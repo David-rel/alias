@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { put, del } from "@vercel/blob";
 import { authOptions } from "@/lib/auth";
-import { query, type DbBusinessRow } from "@/lib/db";
+import {
+  query,
+  type DbBusinessRow,
+  type DbBusinessPaymentPlanRow,
+} from "@/lib/db";
 
 const MAX_LOGO_SIZE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_EXTENSIONS = new Set(["png", "jpg", "jpeg", "webp", "svg"]);
@@ -45,7 +49,7 @@ function deriveExtension(file: File) {
 async function ensureBusiness(ownerId: string) {
   const existing = await query<DbBusinessRow>(
     "SELECT * FROM businesses WHERE owner_user_id = $1 LIMIT 1",
-    [ownerId],
+    [ownerId]
   );
 
   return existing.rows[0] ?? null;
@@ -84,7 +88,7 @@ export async function POST(request: Request) {
   if (missingFields.length > 0) {
     return NextResponse.json(
       { error: `Missing required fields: ${missingFields.join(", ")}` },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
@@ -94,7 +98,7 @@ export async function POST(request: Request) {
   if (!blobToken) {
     return NextResponse.json(
       { error: "BLOB_READ_WRITE_TOKEN is not configured." },
-      { status: 500 },
+      { status: 500 }
     );
   }
 
@@ -102,7 +106,7 @@ export async function POST(request: Request) {
     if (logoEntry.size > MAX_LOGO_SIZE_BYTES) {
       return NextResponse.json(
         { error: "Logo file must be smaller than 5MB." },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -114,7 +118,7 @@ export async function POST(request: Request) {
           error:
             "Unsupported logo format. Please upload PNG, JPG, JPEG, SVG, or WEBP.",
         },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -133,7 +137,10 @@ export async function POST(request: Request) {
           token: blobToken,
         });
       } catch (error) {
-        console.error("Failed to delete previous logo from blob storage:", error);
+        console.error(
+          "Failed to delete previous logo from blob storage:",
+          error
+        );
       }
     }
 
@@ -175,10 +182,20 @@ export async function POST(request: Request) {
       nextLogoPath,
       companySize,
       location,
-    ],
+    ]
   );
 
   const business = upsertResult.rows[0];
+
+  // Fetch the payment plan for this business
+  const planResult = await query<DbBusinessPaymentPlanRow>(
+    `SELECT plan_id, plan_name, status, payment_provider, current_period_end
+     FROM business_payment_plans
+     WHERE business_id = $1`,
+    [business.id]
+  );
+
+  const plan = planResult.rows[0] || null;
 
   return NextResponse.json({
     success: true,
@@ -192,5 +209,14 @@ export async function POST(request: Request) {
       location: business.location,
       featurePreferences: business.feature_preferences,
     },
+    plan: plan
+      ? {
+          planId: plan.plan_id,
+          planName: plan.plan_name,
+          status: plan.status,
+          paymentProvider: plan.payment_provider,
+          currentPeriodEnd: plan.current_period_end,
+        }
+      : null,
   });
 }

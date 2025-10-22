@@ -1,12 +1,17 @@
 -- Enable pgcrypto for UUID generation if not already present
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
+-- Create users table with all required columns
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email TEXT NOT NULL UNIQUE,
   name TEXT,
   password_hash TEXT NOT NULL,
   company_name TEXT,
+  phone_number TEXT,
+  profile_image_url TEXT,
+  timezone TEXT,
+  location TEXT,
   email_verified BOOLEAN NOT NULL DEFAULT FALSE,
   email_code TEXT,
   onboarding_completed BOOLEAN NOT NULL DEFAULT FALSE,
@@ -15,6 +20,15 @@ CREATE TABLE IF NOT EXISTS users (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Add missing columns if they don't exist
+ALTER TABLE users ADD COLUMN IF NOT EXISTS phone_number TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_image_url TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS timezone TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS location TEXT;
+
+-- Add missing columns for businesses table
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS name TEXT;
 
 -- Trigger to keep updated_at in sync
 CREATE OR REPLACE FUNCTION set_updated_at()
@@ -34,6 +48,7 @@ EXECUTE FUNCTION set_updated_at();
 CREATE TABLE IF NOT EXISTS businesses (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   owner_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name TEXT,
   business_category TEXT,
   industry TEXT,
   description TEXT,
@@ -71,5 +86,50 @@ CREATE TABLE IF NOT EXISTS business_team_members (
 DROP TRIGGER IF EXISTS set_timestamp_on_business_team_members ON business_team_members;
 CREATE TRIGGER set_timestamp_on_business_team_members
 BEFORE UPDATE ON business_team_members
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();
+
+CREATE TABLE IF NOT EXISTS business_payment_plans (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  plan_id TEXT NOT NULL DEFAULT 'free',
+  plan_name TEXT NOT NULL DEFAULT 'Free',
+  status TEXT NOT NULL DEFAULT 'active',
+  payment_provider TEXT,
+  current_period_end TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (business_id)
+);
+
+DROP TRIGGER IF EXISTS set_timestamp_on_business_payment_plans ON business_payment_plans;
+CREATE TRIGGER set_timestamp_on_business_payment_plans
+BEFORE UPDATE ON business_payment_plans
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();
+
+INSERT INTO business_payment_plans (business_id, plan_id, plan_name, status)
+SELECT b.id, 'free', 'Free', 'active'
+  FROM businesses b
+ WHERE NOT EXISTS (
+   SELECT 1
+     FROM business_payment_plans p
+    WHERE p.business_id = b.id
+ );
+
+CREATE TABLE IF NOT EXISTS business_integrations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  integration_key TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'inactive',
+  settings JSONB NOT NULL DEFAULT '{}'::JSONB,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (business_id, integration_key)
+);
+
+DROP TRIGGER IF EXISTS set_timestamp_on_business_integrations ON business_integrations;
+CREATE TRIGGER set_timestamp_on_business_integrations
+BEFORE UPDATE ON business_integrations
 FOR EACH ROW
 EXECUTE FUNCTION set_updated_at();

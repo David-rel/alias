@@ -33,13 +33,22 @@ export default async function TeamInvitePage() {
 
   const ownerNameResult = await query<{ company_name: string | null }>(
     `SELECT company_name FROM users WHERE id = $1 LIMIT 1`,
-    [access.business.owner_user_id],
+    [access.business.owner_user_id]
+  );
+
+  // Fetch user profile image
+  const userProfileResult = await query<{ profile_image_url: string | null }>(
+    `SELECT profile_image_url FROM users WHERE id = $1 LIMIT 1`,
+    [session.user.id]
   );
 
   const displayName =
-    ownerNameResult.rows[0]?.company_name ?? access.business.business_category ?? "Alias workspace";
+    ownerNameResult.rows[0]?.company_name ??
+    access.business.business_category ??
+    "Alias workspace";
   const userName = session.user.name ?? null;
   const userEmail = session.user.email ?? "";
+  const profileImageUrl = userProfileResult.rows[0]?.profile_image_url ?? null;
   const initials = (userName ?? userEmail ?? "Alias")
     .split(" ")
     .filter(Boolean)
@@ -56,6 +65,7 @@ export default async function TeamInvitePage() {
       userName={userName}
       userEmail={userEmail}
       userInitials={initials || "A"}
+      profileImageUrl={profileImageUrl}
     >
       <TeamInviteForm />
     </DashboardShell>

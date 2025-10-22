@@ -53,7 +53,7 @@ export default async function AppHome() {
        LEFT JOIN users u ON u.id = b.owner_user_id
       WHERE b.owner_user_id = $1
       LIMIT 1`,
-    [userId],
+    [userId]
   );
 
   let business: BusinessContext | null = ownerBusiness.rows[0]
@@ -64,9 +64,11 @@ export default async function AppHome() {
     : null;
 
   if (!business) {
-    const memberBusiness = await query<BusinessRecord & {
-      role: "owner" | "admin" | "guest" | null;
-    }>(
+    const memberBusiness = await query<
+      BusinessRecord & {
+        role: "owner" | "admin" | "guest" | null;
+      }
+    >(
       `SELECT b.id,
               b.business_category,
               b.industry,
@@ -83,7 +85,7 @@ export default async function AppHome() {
         WHERE m.user_id = $1
         ORDER BY m.invited_at ASC
         LIMIT 1`,
-      [userId],
+      [userId]
     );
 
     const memberRow = memberBusiness.rows[0];
@@ -96,10 +98,30 @@ export default async function AppHome() {
   }
 
   const companyName =
-    business?.company_name ?? session.user.name ?? session.user.email ?? "Alias workspace";
+    business?.company_name ??
+    session.user.name ??
+    session.user.email ??
+    "Alias workspace";
 
-  const userName = session.user.name ?? null;
+  // Fetch user profile data including profile image
+  const userResult = await query<{
+    name: string | null;
+    profile_image_url: string | null;
+  }>(
+    `SELECT name, profile_image_url
+     FROM users
+     WHERE id = $1`,
+    [userId]
+  );
+
+  const userProfile = userResult.rows[0] || {
+    name: null,
+    profile_image_url: null,
+  };
+
+  const userName = userProfile.name ?? session.user.name ?? null;
   const userEmail = session.user.email ?? "";
+  const profileImageUrl = userProfile.profile_image_url;
 
   const userInitials = userName
     ? userName
@@ -114,11 +136,12 @@ export default async function AppHome() {
   return (
     <DashboardShell
       companyName={companyName}
-      role={(business?.role ?? "owner")}
+      role={business?.role ?? "owner"}
       logoPath={business?.logo_path ?? null}
       userName={userName}
       userEmail={userEmail}
       userInitials={userInitials || "A"}
+      profileImageUrl={profileImageUrl}
     />
   );
 }

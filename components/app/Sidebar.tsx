@@ -64,7 +64,7 @@ export function Sidebar({
   collapsed,
   onToggle,
 }: Props) {
-  const containerWidth = collapsed ? "lg:max-w-[84px] lg:px-4" : "lg:max-w-[220px] lg:px-5";
+  const containerWidth = collapsed ? "lg:max-w-[96px] lg:px-4" : "lg:max-w-[272px] lg:px-6";
   const backgroundClass =
     theme === "light"
       ? "bg-white/90 text-neutral-800"
@@ -77,16 +77,23 @@ export function Sidebar({
     theme === "light"
       ? "border-neutral-200 bg-white text-neutral-600 hover:border-[#23a5fe]/60 hover:text-[#0f2747]"
       : "border-white/10 bg-neutral-900 text-neutral-100 hover:border-[#3eb6fd]/80 hover:text-white";
-  const navText = theme === "light" ? "text-neutral-600" : "text-neutral-300";
+  const navBase =
+    theme === "light"
+      ? "border-neutral-200/70 bg-white/85 text-neutral-800 shadow-[0_12px_32px_rgba(15,35,67,0.08)]"
+      : "border-white/10 bg-white/10 text-neutral-100 shadow-[0_12px_32px_rgba(5,15,30,0.45)]";
   const navHover =
     theme === "light"
-      ? "hover:border-[#1f5c9c]/40 hover:bg-[#e6f1ff] hover:text-[#0a2540]"
-      : "hover:border-[#23a5fe]/60 hover:bg-[#0e1b2d] hover:text-white";
+      ? "hover:border-[#1f5c9c]/50 hover:bg-[#e6f1ff] hover:text-[#0a2540]"
+      : "hover:border-[#3eb6fd]/70 hover:bg-[#0e1b2d] hover:text-white";
+  const iconWrapper =
+    theme === "light"
+      ? "bg-[#e3f0ff] text-[#0a2540]"
+      : "bg-white/10 text-white";
   const alignment = collapsed ? "lg:items-center lg:text-center" : "";
 
   return (
     <aside
-      className={`relative flex h-full w-full flex-col overflow-y-auto border-r ${borderColor} ${backgroundClass} px-6 py-6 transition-all duration-300 sm:px-8 lg:overflow-visible lg:py-10 ${containerWidth}`}
+      className={`relative flex h-full w-full min-h-0 max-h-screen flex-col border-r ${borderColor} ${backgroundClass} px-6 py-6 transition-all duration-300 sm:px-8 lg:h-screen lg:py-10 ${containerWidth}`}
     >
       <button
         type="button"
@@ -97,7 +104,7 @@ export function Sidebar({
         {collapsed ? <FiChevronRight /> : <FiChevronLeft />}
       </button>
 
-      <div className={`flex flex-col gap-6 ${alignment}`}>
+      <div className={`flex shrink-0 flex-col gap-6 ${alignment}`}>
         <div
           className={`flex w-full items-center gap-4 ${collapsed ? "lg:justify-center lg:gap-0" : ""}`}
         >
@@ -130,21 +137,27 @@ export function Sidebar({
         </div>
       </div>
 
-      <nav className="mt-10 flex-1">
-        <ul className="space-y-1">
+      <nav className="mt-8 flex-1 overflow-y-auto pr-1">
+        <ul className="space-y-2 pb-6">
           {navigationItems.map((item) => {
             const Icon = item.icon;
             return (
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  className={`flex items-center gap-3 rounded-2xl border border-transparent px-3 py-2 text-sm transition ${navText} ${navHover} ${
+                  className={`group flex items-center gap-3 rounded-2xl border px-3 py-3 text-sm font-semibold transition ${navBase} ${navHover} ${
                     collapsed ? "lg:justify-center" : "justify-start"
                   }`}
                   title={collapsed ? item.label : undefined}
                 >
-                  <Icon className="text-lg" />
-                  <span className={`font-medium ${collapsed ? "lg:hidden" : ""}`}>{item.label}</span>
+                  <span
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition duration-300 ${iconWrapper} ${
+                      collapsed ? "lg:h-10 lg:w-10" : ""
+                    } group-hover:scale-[1.08]`}
+                  >
+                    <Icon className="text-lg" />
+                  </span>
+                  <span className={`tracking-tight ${collapsed ? "lg:hidden" : ""}`}>{item.label}</span>
                 </Link>
               </li>
             );
