@@ -13,6 +13,7 @@ type Props = {
   userName: string | null;
   userEmail: string;
   userInitials: string;
+  onMobileMenuToggle?: () => void;
 };
 
 export function Topbar({
@@ -23,6 +24,7 @@ export function Topbar({
   userName,
   userEmail,
   userInitials,
+  onMobileMenuToggle,
 }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -110,6 +112,16 @@ export function Topbar({
       </div>
 
       <div className="ml-auto flex items-center gap-3">
+        {onMobileMenuToggle ? (
+          <button
+            type="button"
+            aria-label="Open navigation"
+            onClick={onMobileMenuToggle}
+            className={`flex h-10 w-10 items-center justify-center rounded-full border text-lg transition lg:hidden ${buttonBorder} ${buttonBackground} ${buttonHover}`}
+          >
+            ☰
+          </button>
+        ) : null}
         <button
           type="button"
           aria-label="Toggle theme"

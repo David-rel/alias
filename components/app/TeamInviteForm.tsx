@@ -116,7 +116,7 @@ export function TeamInviteForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="flex min-h-full flex-col space-y-6">
       <div className="rounded-3xl border border-white/10 bg-neutral-900/70 px-8 py-10 text-neutral-200 shadow-[0_20px_70px_rgba(8,20,38,0.45)]">
         <p className="text-xs uppercase tracking-[0.35em] text-[#3eb6fd]">Invite teammates</p>
         <h1 className="mt-3 text-3xl font-semibold text-white">Send new invites</h1>
@@ -126,7 +126,7 @@ export function TeamInviteForm() {
         </p>
       </div>
 
-      <div className="rounded-3xl border border-white/10 bg-neutral-900/60 p-6 text-neutral-100 shadow-[0_12px_40px_rgba(7,18,34,0.4)]">
+      <div className="flex-1 rounded-3xl border border-white/10 bg-neutral-900/60 p-6 text-neutral-100 shadow-[0_12px_40px_rgba(7,18,34,0.4)]">
         <div className="space-y-4">
           {members.map((member, index) => (
             <div

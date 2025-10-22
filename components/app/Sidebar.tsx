@@ -22,7 +22,7 @@ type Props = {
 };
 
 function LogoBadge({ companyName, logoPath, collapsed }: { companyName: string; logoPath: string | null; collapsed: boolean }) {
-  const sizeClasses = collapsed ? "h-12 w-12" : "h-16 w-16";
+  const sizeClasses = collapsed ? "h-16 w-16 lg:h-12 lg:w-12" : "h-16 w-16";
 
   if (logoPath) {
     return (
@@ -82,46 +82,52 @@ export function Sidebar({
     theme === "light"
       ? "hover:border-[#1f5c9c]/40 hover:bg-[#e6f1ff] hover:text-[#0a2540]"
       : "hover:border-[#23a5fe]/60 hover:bg-[#0e1b2d] hover:text-white";
-  const alignment = collapsed ? "items-center text-center" : "";
+  const alignment = collapsed ? "lg:items-center lg:text-center" : "";
 
   return (
     <aside
-      className={`relative hidden w-full flex-col border-r ${borderColor} ${backgroundClass} py-10 transition-all duration-300 lg:flex ${containerWidth}`}
+      className={`relative flex h-full w-full flex-col overflow-y-auto border-r ${borderColor} ${backgroundClass} px-6 py-6 transition-all duration-300 sm:px-8 lg:overflow-visible lg:py-10 ${containerWidth}`}
     >
       <button
         type="button"
         onClick={onToggle}
         aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        className={`absolute right-[-18px] top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border text-sm shadow-lg transition ${toggleButtonClass}`}
+        className={`absolute right-[-18px] top-1/2 hidden h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border text-sm shadow-lg transition ${toggleButtonClass} lg:flex lg:z-10`}
       >
         {collapsed ? <FiChevronRight /> : <FiChevronLeft />}
       </button>
 
       <div className={`flex flex-col gap-6 ${alignment}`}>
-        <div className={`flex w-full items-center ${collapsed ? "justify-center" : "justify-start gap-3"}`}>
+        <div
+          className={`flex w-full items-center gap-4 ${collapsed ? "lg:justify-center lg:gap-0" : ""}`}
+        >
           <LogoBadge companyName={companyName} logoPath={logoPath} collapsed={collapsed} />
-          {!collapsed ? (
-            <div className={`flex h-16 w-16 items-center justify-center rounded-2xl border ${badgeBorder}`}>
-              <Image
-                src={theme === "dark" ? "/photos/light/logoClear.png" : "/photos/dark/logoClear.png"}
-                alt="Alias logo"
-                width={56}
-                height={56}
-                className="h-12 w-auto"
-                priority={false}
-              />
-            </div>
-          ) : null}
-        </div>
-        {!collapsed ? (
-          <div className="space-y-2">
-            <h2 className={`text-lg font-semibold ${headerText}`}>{companyName}</h2>
-            <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${pillColors}`}>
-              <span className="inline-block h-2 w-2 rounded-full bg-[#3eb6fd]" />
-              {roleLabel}
-            </span>
+          <div
+            className={`flex h-16 w-16 items-center justify-center rounded-2xl border ${badgeBorder} ${
+              collapsed ? "lg:hidden" : ""
+            }`}
+          >
+            <Image
+              src={theme === "dark" ? "/photos/light/logoClear.png" : "/photos/dark/logoClear.png"}
+              alt="Alias logo"
+              width={56}
+              height={56}
+              className="h-12 w-auto"
+              priority={false}
+            />
           </div>
-        ) : null}
+        </div>
+        <div
+          className={`space-y-2 ${collapsed ? "lg:hidden" : ""}`}
+        >
+          <h2 className={`text-lg font-semibold ${headerText}`}>{companyName}</h2>
+          <span
+            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${pillColors}`}
+          >
+            <span className="inline-block h-2 w-2 rounded-full bg-[#3eb6fd]" />
+            {roleLabel}
+          </span>
+        </div>
       </div>
 
       <nav className="mt-10 flex-1">
@@ -133,12 +139,12 @@ export function Sidebar({
                 <Link
                   href={item.href}
                   className={`flex items-center gap-3 rounded-2xl border border-transparent px-3 py-2 text-sm transition ${navText} ${navHover} ${
-                    collapsed ? "justify-center" : "justify-start"
+                    collapsed ? "lg:justify-center" : "justify-start"
                   }`}
                   title={collapsed ? item.label : undefined}
                 >
                   <Icon className="text-lg" />
-                  {!collapsed ? <span className="font-medium">{item.label}</span> : null}
+                  <span className={`font-medium ${collapsed ? "lg:hidden" : ""}`}>{item.label}</span>
                 </Link>
               </li>
             );
