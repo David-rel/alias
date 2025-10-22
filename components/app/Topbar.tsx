@@ -59,6 +59,18 @@ export function Topbar({
 
   async function handleSignOut() {
     setMenuOpen(false);
+
+    // Set user as logged out before signing out
+    try {
+      await fetch("/api/auth/login-status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ loggedIn: false }),
+      });
+    } catch (error) {
+      console.error("Failed to update login status:", error);
+    }
+
     await signOut({ callbackUrl: "/auth/login" });
   }
 

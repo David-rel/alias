@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -40,7 +40,7 @@ export function LoginForm() {
         const errorMessage = result.error.toString().toUpperCase();
         if (errorMessage.includes("EMAIL_NOT_VERIFIED")) {
           setError(
-            "Please verify your email address before signing in. Check your inbox for the verification link.",
+            "Please verify your email address before signing in. Check your inbox for the verification link."
           );
         } else {
           setError("Unable to sign in with those credentials.");
@@ -66,6 +66,17 @@ export function LoginForm() {
         if (!profile.onboardingCompleted) {
           nextUrl = "/app/onboarding";
         }
+      }
+
+      // Set user as logged in
+      try {
+        await fetch("/api/auth/login-status", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ loggedIn: true }),
+        });
+      } catch (error) {
+        console.error("Failed to update login status:", error);
       }
 
       setLoading(false);
@@ -130,11 +141,7 @@ export function LoginForm() {
             Forgot password?
           </Link>
         </div>
-        {error ? (
-          <p className="text-sm text-[#ff9b9b]">
-            {error}
-          </p>
-        ) : null}
+        {error ? <p className="text-sm text-[#ff9b9b]">{error}</p> : null}
         <button
           type="submit"
           disabled={loading}

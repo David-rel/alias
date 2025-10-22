@@ -26,6 +26,9 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS phone_number TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_image_url TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS timezone TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS location TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS logged_in_status BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS last_online_at TIMESTAMPTZ;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS last_offline_at TIMESTAMPTZ;
 
 -- Add missing columns for businesses table
 ALTER TABLE businesses ADD COLUMN IF NOT EXISTS name TEXT;
@@ -128,8 +131,41 @@ CREATE TABLE IF NOT EXISTS business_integrations (
   UNIQUE (business_id, integration_key)
 );
 
+CREATE TABLE IF NOT EXISTS user_preferences (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  preferences JSONB NOT NULL DEFAULT '{
+    "theme": "dark",
+    "language": "en",
+    "notifications": {
+      "sms": false,
+      "email": true,
+      "push": false
+    },
+    "marketing": {
+      "email_opt_in": false,
+      "organization_announcements": true
+    },
+    "accessibility": {
+      "high_contrast": false,
+      "reduced_motion": false,
+      "large_text": false,
+      "screen_reader_optimized": false
+    }
+  }'::JSONB,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (user_id)
+);
+
 DROP TRIGGER IF EXISTS set_timestamp_on_business_integrations ON business_integrations;
 CREATE TRIGGER set_timestamp_on_business_integrations
 BEFORE UPDATE ON business_integrations
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();
+
+DROP TRIGGER IF EXISTS set_timestamp_on_user_preferences ON user_preferences;
+CREATE TRIGGER set_timestamp_on_user_preferences
+BEFORE UPDATE ON user_preferences
 FOR EACH ROW
 EXECUTE FUNCTION set_updated_at();

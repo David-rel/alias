@@ -24,6 +24,11 @@ type TeamMemberRecord = {
   invited_at: Date;
   joined_at: Date | null;
   user_name: string | null;
+  profile_image_url: string | null;
+  phone_number: string | null;
+  logged_in_status: boolean;
+  last_online_at: Date | null;
+  last_offline_at: Date | null;
 };
 
 export const metadata = {
@@ -143,7 +148,12 @@ export default async function TeamPage() {
             m.invite_status,
             m.invited_at,
             m.joined_at,
-            u.name AS user_name
+            u.name AS user_name,
+            u.profile_image_url,
+            u.phone_number,
+            u.logged_in_status,
+            u.last_online_at,
+            u.last_offline_at
        FROM business_team_members m
        LEFT JOIN users u ON u.id = m.user_id
       WHERE m.business_id = $1
@@ -202,6 +212,15 @@ export default async function TeamPage() {
           inviteStatus: member.invite_status,
           invitedAt: member.invited_at.toISOString(),
           joinedAt: member.joined_at ? member.joined_at.toISOString() : null,
+          profileImageUrl: member.profile_image_url,
+          phoneNumber: member.phone_number,
+          loggedInStatus: member.logged_in_status,
+          lastOnlineAt: member.last_online_at
+            ? member.last_online_at.toISOString()
+            : null,
+          lastOfflineAt: member.last_offline_at
+            ? member.last_offline_at.toISOString()
+            : null,
         }))}
       />
     </DashboardShell>

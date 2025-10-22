@@ -1,1 +1,24 @@
 @import "tailwindcss";
+
+/* Light theme styles */
+.light {
+  --bg-primary: 255 255 255;
+  --bg-secondary: 248 250 252;
+  --bg-tertiary: 241 245 249;
+  --text-primary: 15 23 42;
+  --text-secondary: 71 85 105;
+  --text-tertiary: 148 163 184;
+  --border-primary: 226 232 240;
+  --border-secondary: 203 213 225;
+}
+
+.dark {
+  --bg-primary: 15 23 42;
+  --bg-secondary: 30 41 59;
+  --bg-tertiary: 51 65 85;
+  --text-primary: 248 250 252;
+  --text-secondary: 148 163 184;
+  --text-tertiary: 100 116 139;
+  --border-primary: 71 85 105;
+  --border-secondary: 51 65 85;
+}

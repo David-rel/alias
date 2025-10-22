@@ -1,0 +1,7 @@
+---
+alwaysApply: true
+whe nbuilding new api or pages or componeents:
+always make a over arhcing foler if it doesnt exist for exampel you want settings create  asettings folder in api in app and components so its all put in correctly
+
+follow correct typescript usages and connect everytihgn together for long term usage
+---

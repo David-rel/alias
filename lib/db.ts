@@ -101,3 +101,11 @@ export type DbBusinessIntegrationRow = {
   created_at: Date;
   updated_at: Date;
 };
+
+export type DbUserPreferencesRow = {
+  id: string;
+  user_id: string;
+  preferences: Record<string, unknown>;
+  created_at: Date;
+  updated_at: Date;
+};

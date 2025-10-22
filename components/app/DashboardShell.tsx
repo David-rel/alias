@@ -434,15 +434,106 @@ export function DashboardShell({
   profileImageUrl,
   children,
 }: DashboardShellProps) {
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  // Initialize theme from localStorage to prevent flash
+  const getInitialTheme = (): "dark" | "light" => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("theme");
+      if (stored === "light" || stored === "dark") {
+        return stored;
+      }
+    }
+    return "dark"; // Default fallback
+  };
+
+  const [theme, setTheme] = useState<"dark" | "light">(getInitialTheme);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarOpenMobile, setSidebarOpenMobile] = useState(false);
+  const [userPreferences, setUserPreferences] = useState<{
+    theme: "light" | "dark";
+    language: string;
+    notifications: { sms: boolean; email: boolean; push: boolean };
+    marketing: { email_opt_in: boolean; organization_announcements: boolean };
+    accessibility: {
+      high_contrast: boolean;
+      reduced_motion: boolean;
+      large_text: boolean;
+      screen_reader_optimized: boolean;
+    };
+  } | null>(null);
 
   useEffect(() => {
     if (sidebarOpenMobile) {
       setSidebarCollapsed(false);
     }
   }, [sidebarOpenMobile]);
+
+  useEffect(() => {
+    // Apply initial theme from localStorage immediately
+    const initialTheme = getInitialTheme();
+    if (typeof window !== "undefined") {
+      if (initialTheme === "light") {
+        document.documentElement.classList.add("light");
+      } else {
+        document.documentElement.classList.remove("light");
+      }
+    }
+
+    // Fetch user preferences (but don't override theme if already set correctly)
+    fetch("/api/settings/preferences")
+      .then((res) => res.json())
+      .then((data) => {
+        setUserPreferences(data);
+
+        // Only update theme if the database preference differs from localStorage
+        const dbTheme = data.theme || "dark";
+        if (dbTheme !== initialTheme) {
+          setTheme(dbTheme);
+          if (typeof window !== "undefined") {
+            if (dbTheme === "light") {
+              document.documentElement.classList.add("light");
+            } else {
+              document.documentElement.classList.remove("light");
+            }
+            localStorage.setItem("theme", dbTheme);
+          }
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to fetch user preferences:", error);
+        // Keep the localStorage theme if API fails
+      });
+  }, []);
+
+  useEffect(() => {
+    // Listen for theme change events from other components
+    function handleThemeChange(event: CustomEvent) {
+      const newTheme = event.detail.theme;
+      setTheme(newTheme);
+
+      // Apply theme to document
+      if (typeof window !== "undefined") {
+        if (newTheme === "light") {
+          document.documentElement.classList.add("light");
+        } else {
+          document.documentElement.classList.remove("light");
+        }
+        localStorage.setItem("theme", newTheme);
+      }
+    }
+
+    if (typeof window !== "undefined") {
+      window.addEventListener(
+        "themeChange",
+        handleThemeChange as EventListener
+      );
+      return () => {
+        window.removeEventListener(
+          "themeChange",
+          handleThemeChange as EventListener
+        );
+      };
+    }
+  }, []);
 
   useEffect(() => {
     if (!sidebarOpenMobile) {
@@ -493,8 +584,38 @@ export function DashboardShell({
   const tileHeading = theme === "light" ? "text-neutral-800" : "text-white";
   const tileCopy = theme === "light" ? "text-neutral-500" : "text-neutral-300";
 
-  function toggleTheme() {
-    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+  async function toggleTheme() {
+    const nextTheme = theme === "dark" ? "light" : "dark";
+    setTheme(nextTheme);
+
+    if (typeof window !== "undefined") {
+      if (nextTheme === "light") {
+        document.documentElement.classList.add("light");
+      } else {
+        document.documentElement.classList.remove("light");
+      }
+      localStorage.setItem("theme", nextTheme);
+    }
+
+    // Save theme preference to API
+    try {
+      await fetch("/api/settings/preferences", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ theme: nextTheme }),
+      });
+
+      // Dispatch event to notify other components
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("themeChange", {
+            detail: { theme: nextTheme },
+          })
+        );
+      }
+    } catch (error) {
+      console.error("Failed to save theme preference:", error);
+    }
   }
 
   return (

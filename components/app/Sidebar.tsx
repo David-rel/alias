@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import Link from "next/link";
 import Image from "next/image";
@@ -21,7 +21,15 @@ type Props = {
   onToggle: () => void;
 };
 
-function LogoBadge({ companyName, logoPath, collapsed }: { companyName: string; logoPath: string | null; collapsed: boolean }) {
+function LogoBadge({
+  companyName,
+  logoPath,
+  collapsed,
+}: {
+  companyName: string;
+  logoPath: string | null;
+  collapsed: boolean;
+}) {
   const sizeClasses = collapsed ? "h-16 w-16 lg:h-12 lg:w-12" : "h-16 w-16";
 
   if (logoPath) {
@@ -64,15 +72,24 @@ export function Sidebar({
   collapsed,
   onToggle,
 }: Props) {
-  const containerWidth = collapsed ? "lg:max-w-[96px] lg:px-4" : "lg:max-w-[272px] lg:px-6";
+  const containerWidth = collapsed
+    ? "lg:max-w-[96px] lg:px-4"
+    : "lg:max-w-[272px] lg:px-6";
   const backgroundClass =
     theme === "light"
       ? "bg-white/90 text-neutral-800"
       : "bg-neutral-950/80 text-neutral-100";
-  const borderColor = theme === "light" ? "border-neutral-200/80" : "border-white/10";
-  const badgeBorder = theme === "light" ? "border-[#3eb6fd]/30 bg-white" : "border-[#3eb6fd]/40 bg-white/10";
+  const borderColor =
+    theme === "light" ? "border-neutral-200/80" : "border-white/10";
+  const badgeBorder =
+    theme === "light"
+      ? "border-[#3eb6fd]/30 bg-white"
+      : "border-[#3eb6fd]/40 bg-white/10";
   const headerText = theme === "light" ? "text-neutral-900" : "text-white";
-  const pillColors = theme === "light" ? "border-neutral-200 bg-white text-neutral-700" : "border-white/10 bg-white/5 text-white";
+  const pillColors =
+    theme === "light"
+      ? "border-neutral-200 bg-white text-neutral-700"
+      : "border-white/10 bg-white/5 text-white";
   const toggleButtonClass =
     theme === "light"
       ? "border-neutral-200 bg-white text-neutral-600 hover:border-[#23a5fe]/60 hover:text-[#0f2747]"
@@ -106,16 +123,26 @@ export function Sidebar({
 
       <div className={`flex shrink-0 flex-col gap-6 ${alignment}`}>
         <div
-          className={`flex w-full items-center gap-4 ${collapsed ? "lg:justify-center lg:gap-0" : ""}`}
+          className={`flex w-full items-center gap-4 ${
+            collapsed ? "lg:justify-center lg:gap-0" : ""
+          }`}
         >
-          <LogoBadge companyName={companyName} logoPath={logoPath} collapsed={collapsed} />
+          <LogoBadge
+            companyName={companyName}
+            logoPath={logoPath}
+            collapsed={collapsed}
+          />
           <div
             className={`flex h-16 w-16 items-center justify-center rounded-2xl border ${badgeBorder} ${
               collapsed ? "lg:hidden" : ""
             }`}
           >
             <Image
-              src={theme === "dark" ? "/photos/light/logoClear.png" : "/photos/dark/logoClear.png"}
+              src={
+                theme === "dark"
+                  ? "/photos/light/logoClear.png"
+                  : "/photos/dark/logoClear.png"
+              }
               alt="Alias logo"
               width={56}
               height={56}
@@ -124,10 +151,10 @@ export function Sidebar({
             />
           </div>
         </div>
-        <div
-          className={`space-y-2 ${collapsed ? "lg:hidden" : ""}`}
-        >
-          <h2 className={`text-lg font-semibold ${headerText}`}>{companyName}</h2>
+        <div className={`space-y-2 ${collapsed ? "lg:hidden" : ""}`}>
+          <h2 className={`text-lg font-semibold ${headerText}`}>
+            {companyName}
+          </h2>
           <span
             className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${pillColors}`}
           >
@@ -157,7 +184,11 @@ export function Sidebar({
                   >
                     <Icon className="text-lg" />
                   </span>
-                  <span className={`tracking-tight ${collapsed ? "lg:hidden" : ""}`}>{item.label}</span>
+                  <span
+                    className={`tracking-tight ${collapsed ? "lg:hidden" : ""}`}
+                  >
+                    {item.label}
+                  </span>
                 </Link>
               </li>
             );
