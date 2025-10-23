@@ -17,6 +17,7 @@ import {
   FiFolder,
   FiGlobe,
   FiGrid,
+  FiHeart,
   FiHome,
   FiImage,
   FiLifeBuoy,
@@ -113,6 +114,18 @@ const serviceDefinitions: ServiceDefinition[] = [
     highlights: [
       "Inventory, discounts, and subscriptions managed from one panel.",
       "Alias Pay delivers secure checkout, invoicing, and customer portals.",
+    ],
+  },
+  {
+    id: "donation-management",
+    label: "Donation Management",
+    href: "/app/donation-management",
+    icon: FiHeart,
+    summary:
+      "Accept, track, and manage donations with automated receipting and donor management.",
+    highlights: [
+      "Recurring donation support with flexible payment schedules.",
+      "Automated tax receipts and donor acknowledgment emails.",
     ],
   },
   {
@@ -623,115 +636,113 @@ export function DashboardShell({
       className={`min-h-screen transition-colors duration-300 ${themeBackground}`}
     >
       <div className="flex min-h-screen flex-col lg:flex-row">
-        <div className="flex flex-1">
+        <div
+          className={`fixed inset-y-0 left-0 z-40 w-64 max-w-[85vw] transform transition-transform duration-300 lg:sticky lg:top-0 lg:h-screen lg:transform-none ${
+            sidebarCollapsed
+              ? "lg:w-24 lg:max-w-[96px]"
+              : "lg:w-64 lg:max-w-[256px]"
+          } ${
+            sidebarOpenMobile
+              ? "translate-x-0"
+              : "-translate-x-full lg:translate-x-0"
+          }`}
+        >
+          <Sidebar
+            companyName={companyName}
+            roleLabel={roleLabel}
+            logoPath={logoPath}
+            theme={theme}
+            navigationItems={navigationItems}
+            collapsed={sidebarCollapsed}
+            onToggle={() => {
+              if (sidebarOpenMobile) {
+                setSidebarOpenMobile(false);
+              }
+              setSidebarCollapsed((state) => !state);
+            }}
+          />
+        </div>
+
+        {sidebarOpenMobile ? (
           <div
-            className={`fixed inset-y-0 left-0 z-40 w-64 max-w-[85vw] transform transition-transform duration-300 lg:relative lg:z-auto lg:w-auto lg:max-w-none lg:transform-none ${
-              sidebarOpenMobile
-                ? "translate-x-0"
-                : "-translate-x-full lg:translate-x-0"
-            }`}
-          >
-            <Sidebar
-              companyName={companyName}
-              roleLabel={roleLabel}
-              logoPath={logoPath}
-              theme={theme}
-              navigationItems={navigationItems}
-              collapsed={sidebarCollapsed}
-              onToggle={() => {
-                if (sidebarOpenMobile) {
-                  setSidebarOpenMobile(false);
-                }
-                setSidebarCollapsed((state) => !state);
-              }}
-            />
+            className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm lg:hidden"
+            onClick={() => setSidebarOpenMobile(false)}
+          />
+        ) : null}
+
+        <main className="flex w-full flex-1 flex-col transition-all duration-300">
+          <Topbar
+            companyName={companyName}
+            roleLabel={roleLabel}
+            theme={theme}
+            onThemeToggle={toggleTheme}
+            userName={userName}
+            userEmail={userEmail}
+            userInitials={userInitials}
+            profileImageUrl={profileImageUrl}
+            onMobileMenuToggle={() => setSidebarOpenMobile((state) => !state)}
+          />
+
+          <div className="flex-1 overflow-y-auto px-4 py-8 lg:px-10 lg:py-12">
+            {children ?? (
+              <section
+                className={`rounded-3xl border ${cardBorder} ${cardBackground} p-8 shadow-[0_20px_70px_rgba(8,20,38,0.45)] transition`}
+              >
+                <p className="text-xs uppercase tracking-[0.4em] text-[#3eb6fd]">
+                  Alias dashboard
+                </p>
+                <h1
+                  className={`mt-3 text-3xl font-semibold tracking-tight md:text-4xl ${headingColor}`}
+                >
+                  We&apos;re polishing this experience
+                </h1>
+                <p className={`mt-4 max-w-2xl text-sm ${paragraphColor}`}>
+                  Your data pipelines will land here soon. We&apos;re building a
+                  workspace summary that brings together pipeline health,
+                  approvals, and AI-driven insights tailored to your focus
+                  areas.
+                </p>
+                <div className="mt-8 grid gap-6 md:grid-cols-3">
+                  <div
+                    className={`rounded-2xl border ${tileBorder} ${tileBackground} p-5 transition`}
+                  >
+                    <p className={`text-sm font-semibold ${tileHeading}`}>
+                      Automations
+                    </p>
+                    <p className={`mt-2 text-xs ${tileCopy}`}>
+                      Track upcoming workflows and see which ones need a final
+                      review.
+                    </p>
+                  </div>
+                  <div
+                    className={`rounded-2xl border ${tileBorder} ${tileBackground} p-5 transition`}
+                  >
+                    <p className={`text-sm font-semibold ${tileHeading}`}>
+                      Team activity
+                    </p>
+                    <p className={`mt-2 text-xs ${tileCopy}`}>
+                      Collaborator approvals and comment threads will surface
+                      here.
+                    </p>
+                  </div>
+                  <div
+                    className={`rounded-2xl border ${tileBorder} ${tileBackground} p-5 transition`}
+                  >
+                    <p className={`text-sm font-semibold ${tileHeading}`}>
+                      Insights
+                    </p>
+                    <p className={`mt-2 text-xs ${tileCopy}`}>
+                      AI-generated briefings keep every exec decision-ready at a
+                      glance.
+                    </p>
+                  </div>
+                </div>
+              </section>
+            )}
           </div>
 
-          {sidebarOpenMobile ? (
-            <div
-              className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm lg:hidden"
-              onClick={() => setSidebarOpenMobile(false)}
-            />
-          ) : null}
-
-          <main
-            className={`flex w-full flex-1 flex-col transition-all duration-300 ${
-              sidebarCollapsed ? "lg:pl-0" : "lg:pl-0"
-            }`}
-          >
-            <Topbar
-              companyName={companyName}
-              roleLabel={roleLabel}
-              theme={theme}
-              onThemeToggle={toggleTheme}
-              userName={userName}
-              userEmail={userEmail}
-              userInitials={userInitials}
-              profileImageUrl={profileImageUrl}
-              onMobileMenuToggle={() => setSidebarOpenMobile((state) => !state)}
-            />
-
-            <div className="flex-1 overflow-y-auto px-4 py-8 lg:px-10 lg:py-12">
-              {children ?? (
-                <section
-                  className={`rounded-3xl border ${cardBorder} ${cardBackground} p-8 shadow-[0_20px_70px_rgba(8,20,38,0.45)] transition`}
-                >
-                  <p className="text-xs uppercase tracking-[0.4em] text-[#3eb6fd]">
-                    Alias dashboard
-                  </p>
-                  <h1
-                    className={`mt-3 text-3xl font-semibold tracking-tight md:text-4xl ${headingColor}`}
-                  >
-                    We&apos;re polishing this experience
-                  </h1>
-                  <p className={`mt-4 max-w-2xl text-sm ${paragraphColor}`}>
-                    Your data pipelines will land here soon. We&apos;re building
-                    a workspace summary that brings together pipeline health,
-                    approvals, and AI-driven insights tailored to your focus
-                    areas.
-                  </p>
-                  <div className="mt-8 grid gap-6 md:grid-cols-3">
-                    <div
-                      className={`rounded-2xl border ${tileBorder} ${tileBackground} p-5 transition`}
-                    >
-                      <p className={`text-sm font-semibold ${tileHeading}`}>
-                        Automations
-                      </p>
-                      <p className={`mt-2 text-xs ${tileCopy}`}>
-                        Track upcoming workflows and see which ones need a final
-                        review.
-                      </p>
-                    </div>
-                    <div
-                      className={`rounded-2xl border ${tileBorder} ${tileBackground} p-5 transition`}
-                    >
-                      <p className={`text-sm font-semibold ${tileHeading}`}>
-                        Team activity
-                      </p>
-                      <p className={`mt-2 text-xs ${tileCopy}`}>
-                        Collaborator approvals and comment threads will surface
-                        here.
-                      </p>
-                    </div>
-                    <div
-                      className={`rounded-2xl border ${tileBorder} ${tileBackground} p-5 transition`}
-                    >
-                      <p className={`text-sm font-semibold ${tileHeading}`}>
-                        Insights
-                      </p>
-                      <p className={`mt-2 text-xs ${tileCopy}`}>
-                        AI-generated briefings keep every exec decision-ready at
-                        a glance.
-                      </p>
-                    </div>
-                  </div>
-                </section>
-              )}
-            </div>
-
-            <DashboardFooter theme={theme} />
-          </main>
-        </div>
+          <DashboardFooter theme={theme} />
+        </main>
       </div>
     </div>
   );

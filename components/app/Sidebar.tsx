@@ -74,7 +74,7 @@ export function Sidebar({
 }: Props) {
   const containerWidth = collapsed
     ? "lg:max-w-[96px] lg:px-4"
-    : "lg:max-w-[272px] lg:px-6";
+    : "lg:max-w-[256px] lg:px-6";
   const backgroundClass =
     theme === "light"
       ? "bg-white/90 text-neutral-800"
@@ -110,7 +110,7 @@ export function Sidebar({
 
   return (
     <aside
-      className={`relative flex h-full w-full min-h-0 max-h-screen flex-col border-r ${borderColor} ${backgroundClass} px-6 py-6 transition-all duration-300 sm:px-8 lg:h-screen lg:py-10 ${containerWidth}`}
+      className={`relative flex h-screen w-full flex-col border-r ${borderColor} ${backgroundClass} px-6 py-6 transition-all duration-300 sm:px-8 lg:py-10 ${containerWidth}`}
     >
       <button
         type="button"
