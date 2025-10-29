@@ -166,10 +166,10 @@ export function Sidebar({
 
       <nav className="mt-8 flex-1 overflow-y-auto pr-1">
         <ul className="space-y-2 pb-6">
-          {navigationItems.map((item) => {
+          {navigationItems.map((item, index) => {
             const Icon = item.icon;
             return (
-              <li key={item.href}>
+              <li key={`${item.href}-${index}`}>
                 <Link
                   href={item.href}
                   className={`group flex items-center gap-3 rounded-2xl border px-3 py-3 text-sm font-semibold transition ${navBase} ${navHover} ${

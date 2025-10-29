@@ -1,4 +1,9 @@
 import { Pool, type QueryResult, type QueryResultRow } from "pg";
+import type {
+  FormQuestionType,
+  FormResponseStatus,
+  FormStatus,
+} from "@/types/forms";
 
 const connectionString = process.env.DATABASE_URL;
 
@@ -106,6 +111,65 @@ export type DbUserPreferencesRow = {
   id: string;
   user_id: string;
   preferences: Record<string, unknown>;
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type DbFormRow = {
+  id: string;
+  business_id: string;
+  created_by_user_id: string | null;
+  title: string;
+  description: string | null;
+  share_id: string;
+  status: FormStatus;
+  accepting_responses: boolean;
+  submission_message: string | null;
+  cover_image_url: string | null;
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type DbFormQuestionRow = {
+  id: string;
+  form_id: string;
+  field_key: string;
+  question_type: FormQuestionType;
+  label: string;
+  description: string | null;
+  required: boolean;
+  position: number;
+  settings: Record<string, unknown>;
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type DbFormResponseRow = {
+  id: string;
+  form_id: string;
+  submitted_by_user_id: string | null;
+  submitted_ip: string | null;
+  submitted_user_agent: string | null;
+  submitted_at: Date;
+  status: FormResponseStatus;
+  metadata: Record<string, unknown>;
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type DbFormAnswerRow = {
+  id: string;
+  response_id: string;
+  question_id: string;
+  value_text: string | null;
+  value_number: string | null;
+  value_boolean: boolean | null;
+  value_date: Date | null;
+  value_json: unknown | null;
+  file_path: string | null;
+  file_name: string | null;
+  file_size: number | null;
+  file_content_type: string | null;
   created_at: Date;
   updated_at: Date;
 };

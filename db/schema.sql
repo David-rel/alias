@@ -169,3 +169,125 @@ CREATE TRIGGER set_timestamp_on_user_preferences
 BEFORE UPDATE ON user_preferences
 FOR EACH ROW
 EXECUTE FUNCTION set_updated_at();
+
+CREATE TABLE IF NOT EXISTS forms (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  created_by_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  title TEXT NOT NULL,
+  description TEXT,
+  share_id TEXT NOT NULL UNIQUE,
+  status TEXT NOT NULL DEFAULT 'draft',
+  accepting_responses BOOLEAN NOT NULL DEFAULT TRUE,
+  submission_message TEXT,
+  cover_image_url TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CHECK (status IN ('draft', 'active', 'archived'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_forms_business_id ON forms (business_id);
+CREATE INDEX IF NOT EXISTS idx_forms_share_id ON forms (share_id);
+
+DROP TRIGGER IF EXISTS set_timestamp_on_forms ON forms;
+CREATE TRIGGER set_timestamp_on_forms
+BEFORE UPDATE ON forms
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();
+
+ALTER TABLE forms ADD COLUMN IF NOT EXISTS cover_image_url TEXT;
+
+CREATE TABLE IF NOT EXISTS form_questions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  form_id UUID NOT NULL REFERENCES forms(id) ON DELETE CASCADE,
+  field_key TEXT NOT NULL,
+  question_type TEXT NOT NULL,
+  label TEXT NOT NULL,
+  description TEXT,
+  required BOOLEAN NOT NULL DEFAULT FALSE,
+  position INTEGER NOT NULL DEFAULT 0,
+  settings JSONB NOT NULL DEFAULT '{}'::JSONB,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CHECK (
+    question_type IN (
+      'short_text',
+      'long_text',
+      'email',
+      'number',
+      'decimal',
+      'boolean',
+      'date',
+      'time',
+      'choice_single',
+      'choice_multi',
+      'file',
+      'rating'
+    )
+  )
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_form_questions_field_key
+  ON form_questions (form_id, field_key);
+CREATE INDEX IF NOT EXISTS idx_form_questions_form_id
+  ON form_questions (form_id);
+
+DROP TRIGGER IF EXISTS set_timestamp_on_form_questions ON form_questions;
+CREATE TRIGGER set_timestamp_on_form_questions
+BEFORE UPDATE ON form_questions
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();
+
+CREATE TABLE IF NOT EXISTS form_responses (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  form_id UUID NOT NULL REFERENCES forms(id) ON DELETE CASCADE,
+  submitted_by_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  submitted_ip INET,
+  submitted_user_agent TEXT,
+  submitted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  status TEXT NOT NULL DEFAULT 'submitted',
+  metadata JSONB NOT NULL DEFAULT '{}'::JSONB,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CHECK (status IN ('submitted', 'flagged', 'spam', 'deleted'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_form_responses_form_id
+  ON form_responses (form_id);
+CREATE INDEX IF NOT EXISTS idx_form_responses_submitted_at
+  ON form_responses (submitted_at DESC);
+
+DROP TRIGGER IF EXISTS set_timestamp_on_form_responses ON form_responses;
+CREATE TRIGGER set_timestamp_on_form_responses
+BEFORE UPDATE ON form_responses
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();
+
+CREATE TABLE IF NOT EXISTS form_answers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  response_id UUID NOT NULL REFERENCES form_responses(id) ON DELETE CASCADE,
+  question_id UUID NOT NULL REFERENCES form_questions(id) ON DELETE CASCADE,
+  value_text TEXT,
+  value_number NUMERIC,
+  value_boolean BOOLEAN,
+  value_date TIMESTAMPTZ,
+  value_json JSONB,
+  file_path TEXT,
+  file_name TEXT,
+  file_size BIGINT,
+  file_content_type TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (response_id, question_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_form_answers_response_id
+  ON form_answers (response_id);
+CREATE INDEX IF NOT EXISTS idx_form_answers_question_id
+  ON form_answers (question_id);
+
+DROP TRIGGER IF EXISTS set_timestamp_on_form_answers ON form_answers;
+CREATE TRIGGER set_timestamp_on_form_answers
+BEFORE UPDATE ON form_answers
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();

@@ -69,6 +69,18 @@ const serviceDefinitions: ServiceDefinition[] = [
     highlights: [],
   },
   {
+    id: "forms",
+    label: "Forms",
+    href: "/app/forms",
+    icon: FiCheckSquare,
+    summary:
+      "Build branded intake flows with unlimited questions, secure uploads, and analytics.",
+    highlights: [
+      "Launch unlimited forms with advanced field types and reusable templates.",
+      "Capture files and structured data, then route every response into automations.",
+    ],
+  },
+  {
     id: "domain-hosting",
     label: "Domain & Hosting",
     href: "/app/domain-hosting",
@@ -461,19 +473,6 @@ export function DashboardShell({
   const [theme, setTheme] = useState<"dark" | "light">(getInitialTheme);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarOpenMobile, setSidebarOpenMobile] = useState(false);
-  const [userPreferences, setUserPreferences] = useState<{
-    theme: "light" | "dark";
-    language: string;
-    notifications: { sms: boolean; email: boolean; push: boolean };
-    marketing: { email_opt_in: boolean; organization_announcements: boolean };
-    accessibility: {
-      high_contrast: boolean;
-      reduced_motion: boolean;
-      large_text: boolean;
-      screen_reader_optimized: boolean;
-    };
-  } | null>(null);
-
   useEffect(() => {
     if (sidebarOpenMobile) {
       setSidebarCollapsed(false);
@@ -495,8 +494,6 @@ export function DashboardShell({
     fetch("/api/settings/preferences")
       .then((res) => res.json())
       .then((data) => {
-        setUserPreferences(data);
-
         // Only update theme if the database preference differs from localStorage
         const dbTheme = data.theme || "dark";
         if (dbTheme !== initialTheme) {

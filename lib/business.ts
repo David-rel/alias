@@ -2,7 +2,10 @@ import {
   query,
   type DbBusinessIntegrationRow,
   type DbBusinessPaymentPlanRow,
+  type DbBusinessRow,
+  type DbBusinessTeamMemberRow,
 } from "./db";
+import type { BusinessRole } from "@/types/business";
 
 export const DEFAULT_BUSINESS_INTEGRATIONS: ReadonlyArray<{
   key: string;
@@ -85,4 +88,56 @@ export async function getBusinessIntegrations(
   );
 
   return refreshed.rows;
+}
+
+export type BusinessContextForUser = {
+  business: DbBusinessRow;
+  role: BusinessRole;
+};
+
+export async function getPrimaryBusinessForUser(
+  userId: string,
+): Promise<BusinessContextForUser | null> {
+  const ownedBusiness = await query<DbBusinessRow>(
+    `SELECT *
+       FROM businesses
+      WHERE owner_user_id = $1
+      LIMIT 1`,
+    [userId],
+  );
+
+  const owned = ownedBusiness.rows[0];
+
+  if (owned) {
+    return {
+      business: owned,
+      role: "owner",
+    };
+  }
+
+  const memberBusiness = await query<
+    DbBusinessRow & Pick<DbBusinessTeamMemberRow, "role">
+  >(
+    `SELECT b.*, COALESCE(m.role, 'guest') AS role
+       FROM business_team_members m
+       JOIN businesses b ON b.id = m.business_id
+      WHERE m.user_id = $1
+      ORDER BY m.invited_at ASC
+      LIMIT 1`,
+    [userId],
+  );
+
+  const member = memberBusiness.rows[0];
+
+  if (!member) {
+    return null;
+  }
+
+  const safeRole =
+    member.role === "owner" || member.role === "admin" ? member.role : "guest";
+
+  return {
+    business: member,
+    role: safeRole,
+  };
 }

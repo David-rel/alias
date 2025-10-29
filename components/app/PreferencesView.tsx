@@ -34,6 +34,12 @@ const languageOptions = [
   { value: "zh", label: "中文" },
 ];
 
+type NestedPreferenceKey = {
+  [K in keyof UserPreferences]: UserPreferences[K] extends Record<string, unknown>
+    ? K
+    : never;
+}[keyof UserPreferences];
+
 function sectionCard(classes = "") {
   return `rounded-3xl border border-white/10 bg-neutral-900/60 p-6 text-neutral-100 shadow-[0_16px_50px_rgba(6,18,34,0.45)] ${classes}`;
 }
@@ -73,7 +79,7 @@ export function PreferencesView() {
         }
         localStorage.setItem("theme", data.theme || "dark");
       }
-    } catch (err) {
+    } catch {
       setError("Failed to load preferences");
     } finally {
       setLoading(false);
@@ -134,7 +140,7 @@ export function PreferencesView() {
   }
 
   function updateNestedPreference<
-    K extends keyof UserPreferences,
+    K extends NestedPreferenceKey,
     NK extends keyof UserPreferences[K]
   >(key: K, nestedKey: NK, value: UserPreferences[K][NK]) {
     setPreferences((prev) =>
@@ -142,7 +148,7 @@ export function PreferencesView() {
         ? {
             ...prev,
             [key]: {
-              ...(prev[key] as any),
+              ...prev[key],
               [nestedKey]: value,
             },
           }

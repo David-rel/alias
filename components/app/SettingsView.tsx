@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo, useRef, useState } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 type ViewerRole = "owner" | "admin" | "guest";
