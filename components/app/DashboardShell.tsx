@@ -69,18 +69,6 @@ const serviceDefinitions: ServiceDefinition[] = [
     highlights: [],
   },
   {
-    id: "forms",
-    label: "Forms",
-    href: "/app/forms",
-    icon: FiCheckSquare,
-    summary:
-      "Build branded intake flows with unlimited questions, secure uploads, and analytics.",
-    highlights: [
-      "Launch unlimited forms with advanced field types and reusable templates.",
-      "Capture files and structured data, then route every response into automations.",
-    ],
-  },
-  {
     id: "domain-hosting",
     label: "Domain & Hosting",
     href: "/app/domain-hosting",
@@ -173,6 +161,18 @@ const serviceDefinitions: ServiceDefinition[] = [
       "Publish public booking pages and orchestrate events with automated reminders.",
     highlights: [
       "Alias Bookings syncs with Google Calendar and enforces buffer rules.",
+      "SMS and email reminders reduce no-shows automatically.",
+    ],
+  },
+   {
+    id: "event-scheduler",
+    label: "Event Scheduler",
+    href: "/app/event-scheduler",
+    icon: FiClock,
+    summary:
+      "Publish public events.",
+    highlights: [
+      "Alias Events syncs with Google Calendar and enforces buffer rules.",
       "SMS and email reminders reduce no-shows automatically.",
     ],
   },

@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import type { AppointmentBookingStatus } from "@/types/appointments";
 
 const smtpHost = process.env.SMTP_HOST;
 const smtpPort = process.env.SMTP_PORT
@@ -241,6 +242,333 @@ export async function sendTeamInviteEmail({
         <p style="margin: 0; font-size: 12px; color: #475569;">
           This link expires on ${expiresLabel}. If you weren’t expecting this invitation you can ignore it.
         </p>
+      </div>
+    `,
+  });
+}
+
+function formatBookingWindow(
+  startIso: string,
+  endIso: string,
+  timezone: string,
+) {
+  const start = new Date(startIso);
+  const end = new Date(endIso);
+
+  const dateFormatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+
+  const timeFormatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    hour: "numeric",
+    minute: "2-digit",
+  });
+
+  const zoneFormatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    timeZoneName: "short",
+  });
+
+  const tzLabel = zoneFormatter.format(start).split(" ").pop() ?? timezone;
+
+  return {
+    dateLabel: dateFormatter.format(start),
+    timeLabel: `${timeFormatter.format(start)} - ${timeFormatter.format(end)} ${tzLabel}`,
+  };
+}
+
+type AppointmentConfirmationEmailOptions = {
+  recipient: string;
+  guestName: string;
+  calendarName: string;
+  businessName?: string | null;
+  startTimeIso: string;
+  endTimeIso: string;
+  timezone: string;
+  locationSummary?: string | null;
+  meetingUrl?: string | null;
+  notes?: string | null;
+  status: AppointmentBookingStatus;
+};
+
+type AppointmentNotificationEmailOptions = AppointmentConfirmationEmailOptions & {
+  guestEmail: string;
+  calendarId: string;
+  reason?: string | null;
+};
+
+function resolveFromAddress() {
+  return emailFrom ?? gmailUser ?? smtpUser ?? "no-reply@alias.app";
+}
+
+export async function sendAppointmentConfirmationEmail(
+  options: AppointmentConfirmationEmailOptions,
+) {
+  const fromAddress = resolveFromAddress();
+  const isPending = options.status === "pending";
+  const label = formatBookingWindow(
+    options.startTimeIso,
+    options.endTimeIso,
+    options.timezone,
+  );
+  const experienceLabel =
+    options.businessName ?? "the team";
+
+  if (!emailDeliveryConfigured()) {
+    console.warn(
+      "[email] Delivery skipped – configure GMAIL_USER/GMAIL_PASS or SMTP_HOST/SMTP_USER/SMTP_PASS to enable sending.",
+    );
+    console.info(
+      `[email] Confirmation for ${options.recipient}: ${options.calendarName} on ${label.dateLabel} ${label.timeLabel}`,
+    );
+    return;
+  }
+
+  const transport = getTransporter();
+
+  const locationLine = options.locationSummary
+    ? `Where: ${options.locationSummary}`
+    : "Where: Details to follow";
+  const meetingLink =
+    !isCancelled && options.meetingUrl && options.meetingUrl.length > 0
+      ? `Join link: ${options.meetingUrl}`
+      : null;
+
+  const notesBlock = options.notes
+    ? `
+Notes from you: ${options.notes}
+`
+    : "";
+
+  const subject = isPending
+    ? `We received your booking request for ${options.calendarName}`
+    : `You're booked for ${options.calendarName}`;
+
+  await transport.sendMail({
+    from: fromAddress,
+    to: options.recipient,
+    subject,
+    text: `Hi ${options.guestName},
+
+${isPending ? `Thanks for requesting a time with ${experienceLabel}. We just received your booking and will confirm shortly.
+` : `Your time with ${experienceLabel} is confirmed.
+`}
+When: ${label.dateLabel} · ${label.timeLabel}
+${locationLine}
+${meetingLink ? `${meetingLink}
+` : ""}${notesBlock}
+${isPending ? "We'll email you again once the team confirms your booking." : "If anything changes, reply to this email and the team will help."}
+`,
+    html: `
+      <div style="font-family: sans-serif; line-height: 1.6; color: #0f172a;">
+        <h1 style="font-size: 26px; margin-bottom: 12px;">${
+          isPending ? "We received your request" : "You're scheduled!"
+        }</h1>
+        <p style="margin: 0 0 16px;">Hi ${options.guestName}, ${
+          isPending
+            ? `we just received your booking request with <strong>${experienceLabel}</strong>. We'll confirm the details shortly.`
+            : `your time with <strong>${experienceLabel}</strong> is confirmed.`
+        }</p>
+        <div style="border-radius: 16px; background: #f1f7ff; padding: 16px 20px; margin-bottom: 16px;">
+          <p style="margin: 0 0 8px; font-weight: 600; color: #0b3a75;">${options.calendarName}</p>
+          <p style="margin: 0;">${label.dateLabel}</p>
+          <p style="margin: 4px 0 0;">${label.timeLabel}</p>
+          <p style="margin: 12px 0 0;">${locationLine}</p>
+          ${meetingLink ? `<p style="margin: 8px 0 0;"><a href="${options.meetingUrl}" style="color: #0064d6;">Join meeting →</a></p>` : ""}
+        </div>
+        ${options.notes ? `<p style="margin: 0 0 16px;">Notes you shared:<br/><em>${options.notes}</em></p>` : ""}
+        <p style="margin: 0 0 8px;">${
+          isPending
+            ? "We'll send a confirmation email once the team approves your booking."
+            : "Need to make a change? Reply to this email and we'll help."
+        }</p>
+        <p style="margin: 12px 0 0; font-size: 12px; color: #475569;">Sent by Alias scheduling.</p>
+      </div>
+    `,
+  });
+}
+
+export async function sendAppointmentNotificationEmail(
+  options: AppointmentNotificationEmailOptions,
+) {
+  const fromAddress = resolveFromAddress();
+  const isPending = options.status === "pending";
+  const isCancelled = options.status === "cancelled";
+  const label = formatBookingWindow(
+    options.startTimeIso,
+    options.endTimeIso,
+    options.timezone,
+  );
+  const siteBase = baseUrl();
+  const manageUrl = `${siteBase}/app/appointment-scheduler/${options.calendarId}`;
+
+  if (!emailDeliveryConfigured()) {
+    console.warn(
+      "[email] Delivery skipped – configure GMAIL_USER/GMAIL_PASS or SMTP_HOST/SMTP_USER/SMTP_PASS to enable sending.",
+    );
+    console.info(
+      `[email] Internal booking alert for ${options.recipient}: ${options.calendarName} with ${options.guestName} on ${label.dateLabel} ${label.timeLabel}`,
+    );
+    return;
+  }
+
+  const transport = getTransporter();
+
+  const locationLine = options.locationSummary
+    ? `Location: ${options.locationSummary}`
+    : "Location: Details to share";
+  const meetingLink =
+    options.meetingUrl && options.meetingUrl.length > 0
+      ? `Join link: ${options.meetingUrl}`
+      : null;
+
+  const notesBlock = options.notes
+    ? `
+Guest notes: ${options.notes}
+`
+    : "";
+
+  const subject = isCancelled
+    ? `Booking cancelled: ${options.calendarName} with ${options.guestName}`
+    : isPending
+      ? `Booking request: ${options.calendarName} with ${options.guestName}`
+      : `New booking: ${options.calendarName} with ${options.guestName}`;
+
+  await transport.sendMail({
+    from: fromAddress,
+    to: options.recipient,
+    replyTo: options.guestEmail,
+    subject,
+    text: `Heads up! ${options.guestName} (${options.guestEmail}) ${
+      isCancelled ? "cancelled" : isPending ? "requested" : "booked"
+    } ${options.calendarName}.
+
+When: ${label.dateLabel} · ${label.timeLabel}
+${locationLine}
+${meetingLink ? `${meetingLink}
+` : ""}${notesBlock}${
+      isCancelled && options.reason
+        ? `
+Reason: ${options.reason}
+`
+        : ""
+    }
+${
+      isPending
+        ? "Open the calendar to approve or reschedule:"
+        : isCancelled
+          ? "Open the calendar to follow up or remove the slot:"
+          : "View the calendar:"
+    } ${manageUrl}
+`,
+    html: `
+      <div style="font-family: sans-serif; line-height: 1.6; color: #0f172a;">
+        <h1 style="font-size: 24px; margin-bottom: 12px;">${
+          isCancelled
+            ? "Booking cancelled"
+            : isPending
+              ? "New booking request"
+              : "New booking confirmed"
+        }</h1>
+        <p style="margin: 0 0 16px;"><strong>${options.guestName}</strong> (${options.guestEmail}) just ${
+          isCancelled ? "cancelled" : isPending ? "requested" : "booked"
+        } <strong>${options.calendarName}</strong>.</p>
+        <div style="border-radius: 16px; background: #f1f7ff; padding: 16px 20px; margin-bottom: 16px;">
+          <p style="margin: 0;">${label.dateLabel}</p>
+          <p style="margin: 4px 0 0;">${label.timeLabel}</p>
+          <p style="margin: 12px 0 0;">${locationLine}</p>
+          ${meetingLink ? `<p style="margin: 8px 0 0;"><a href="${options.meetingUrl}" style="color: #0064d6;">Join meeting →</a></p>` : ""}
+        </div>
+        ${options.notes ? `<p style="margin: 0 0 16px;">Guest notes:<br/><em>${options.notes}</em></p>` : ""}
+        ${
+          isCancelled && options.reason
+            ? `<p style="margin: 0 0 12px;">Reason:<br/><em>${options.reason}</em></p>`
+            : ""
+        }
+        <p style="margin: 0 0 12px;">${
+          isPending
+            ? "Open the calendar to approve or reschedule this request:"
+            : isCancelled
+              ? "Open the calendar to follow up or adjust availability:"
+              : "Open the calendar to review or reschedule:"
+        }</p>
+        <p style="margin: 0 0 16px;">
+          <a href="${manageUrl}" style="display: inline-block; padding: 12px 22px; border-radius: 999px; background: linear-gradient(90deg,#0064d6,#23a5fe,#3eb6fd); color: #0b1120; text-decoration: none; font-weight: 600;">View calendar</a>
+        </p>
+        <p style="margin: 0; font-size: 12px; color: #475569;">Sent by Alias scheduling.</p>
+      </div>
+    `,
+  });
+}
+
+type AppointmentDeclinedEmailOptions = {
+  recipient: string;
+  guestName: string;
+  calendarName: string;
+  businessName?: string | null;
+  startTimeIso: string;
+  endTimeIso: string;
+  timezone: string;
+  reason?: string;
+};
+
+export async function sendAppointmentDeclinedEmail(
+  options: AppointmentDeclinedEmailOptions,
+) {
+  const fromAddress = resolveFromAddress();
+  const label = formatBookingWindow(
+    options.startTimeIso,
+    options.endTimeIso,
+    options.timezone,
+  );
+  const experienceLabel = options.businessName ?? "our team";
+
+  if (!emailDeliveryConfigured()) {
+    console.warn(
+      "[email] Delivery skipped – configure GMAIL_USER/GMAIL_PASS or SMTP_HOST/SMTP_USER/SMTP_PASS to enable sending.",
+    );
+    console.info(
+      `[email] Decline for ${options.recipient}: ${options.calendarName} on ${label.dateLabel} ${label.timeLabel}`,
+    );
+    return;
+  }
+
+  const transport = getTransporter();
+
+  await transport.sendMail({
+    from: fromAddress,
+    to: options.recipient,
+    subject: `Update on your booking for ${options.calendarName}`,
+    text: `Hi ${options.guestName},
+
+Thank you for requesting time with ${experienceLabel}. We won't be able to host ${options.calendarName} on ${label.dateLabel} (${label.timeLabel}).
+${options.reason ? `
+Reason provided: ${options.reason}
+` : ""}
+Feel free to pick another slot from the booking link or reply to this email and we'll coordinate directly.
+
+`,
+    html: `
+      <div style="font-family: sans-serif; line-height: 1.6; color: #0f172a;">
+        <h1 style="font-size: 24px; margin-bottom: 12px;">We need to reschedule</h1>
+        <p style="margin: 0 0 16px;">Hi ${options.guestName}, thanks for requesting time with ${experienceLabel}. We won't be able to host <strong>${options.calendarName}</strong> on the requested slot.</p>
+        <div style="border-radius: 16px; background: #fef3f2; padding: 16px 20px; margin-bottom: 16px; border: 1px solid #fecaca;">
+          <p style="margin: 0; font-weight: 600; color: #b91c1c;">Originally requested</p>
+          <p style="margin: 4px 0 0;">${label.dateLabel}</p>
+          <p style="margin: 0;">${label.timeLabel}</p>
+        </div>
+        ${
+          options.reason
+            ? `<p style="margin: 0 0 16px;">Reason provided:<br/><em>${options.reason}</em></p>`
+            : ""
+        }
+        <p style="margin: 0 0 12px;">You can pick another time from the booking link or reply to this email and we'll coordinate.</p>
+        <p style="margin: 12px 0 0; font-size: 12px; color: #475569;">Sent by Alias scheduling.</p>
       </div>
     `,
   });

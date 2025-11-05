@@ -291,3 +291,94 @@ CREATE TRIGGER set_timestamp_on_form_answers
 BEFORE UPDATE ON form_answers
 FOR EACH ROW
 EXECUTE FUNCTION set_updated_at();
+
+-- Appointment scheduler tables
+CREATE TABLE IF NOT EXISTS appointment_calendars (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  owner_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  appointment_type TEXT NOT NULL,
+  description TEXT,
+  location_type TEXT NOT NULL CHECK (location_type IN ('in_person', 'virtual', 'phone', 'custom')),
+  location_details TEXT,
+  virtual_meeting_preference TEXT,
+  duration_minutes INTEGER NOT NULL CHECK (duration_minutes > 0 AND duration_minutes <= 480),
+  buffer_before_minutes INTEGER NOT NULL DEFAULT 0 CHECK (buffer_before_minutes >= 0 AND buffer_before_minutes <= 720),
+  buffer_after_minutes INTEGER NOT NULL DEFAULT 0 CHECK (buffer_after_minutes >= 0 AND buffer_after_minutes <= 720),
+  timezone TEXT NOT NULL,
+  share_id TEXT NOT NULL UNIQUE,
+  booking_window_days INTEGER NOT NULL DEFAULT 60 CHECK (booking_window_days >= 0 AND booking_window_days <= 365),
+  min_schedule_notice_minutes INTEGER NOT NULL DEFAULT 120 CHECK (min_schedule_notice_minutes >= 0 AND min_schedule_notice_minutes <= 1440),
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
+  requires_confirmation BOOLEAN NOT NULL DEFAULT FALSE,
+  google_calendar_sync BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+DROP TRIGGER IF EXISTS set_timestamp_on_appointment_calendars ON appointment_calendars;
+CREATE TRIGGER set_timestamp_on_appointment_calendars
+BEFORE UPDATE ON appointment_calendars
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();
+
+CREATE TABLE IF NOT EXISTS appointment_availability_rules (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  calendar_id UUID NOT NULL REFERENCES appointment_calendars(id) ON DELETE CASCADE,
+  rule_type TEXT NOT NULL DEFAULT 'weekly' CHECK (rule_type IN ('weekly', 'date')),
+  day_of_week SMALLINT CHECK (day_of_week BETWEEN 0 AND 6),
+  specific_date DATE,
+  start_minutes INTEGER NOT NULL CHECK (start_minutes >= 0 AND start_minutes < 1440),
+  end_minutes INTEGER NOT NULL CHECK (end_minutes > 0 AND end_minutes <= 1440),
+  is_unavailable BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CHECK (end_minutes > start_minutes),
+  CHECK (
+    (rule_type = 'weekly' AND specific_date IS NULL AND day_of_week IS NOT NULL)
+    OR (rule_type = 'date' AND specific_date IS NOT NULL)
+  )
+);
+
+DROP TRIGGER IF EXISTS set_timestamp_on_appointment_availability_rules ON appointment_availability_rules;
+CREATE TRIGGER set_timestamp_on_appointment_availability_rules
+BEFORE UPDATE ON appointment_availability_rules
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();
+
+CREATE INDEX IF NOT EXISTS idx_appointment_availability_rules_calendar_id
+  ON appointment_availability_rules (calendar_id);
+
+CREATE TABLE IF NOT EXISTS appointment_bookings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  calendar_id UUID NOT NULL REFERENCES appointment_calendars(id) ON DELETE CASCADE,
+  created_by_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  share_id TEXT NOT NULL UNIQUE,
+  guest_name TEXT NOT NULL,
+  guest_email TEXT NOT NULL,
+  guest_timezone TEXT,
+  guest_notes TEXT,
+  start_time TIMESTAMPTZ NOT NULL,
+  end_time TIMESTAMPTZ NOT NULL,
+  status TEXT NOT NULL DEFAULT 'scheduled' CHECK (status IN ('pending', 'scheduled', 'cancelled', 'completed')),
+  meeting_url TEXT,
+  meeting_location TEXT,
+  external_event_id TEXT,
+  external_calendar TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CHECK (end_time > start_time)
+);
+
+DROP TRIGGER IF EXISTS set_timestamp_on_appointment_bookings ON appointment_bookings;
+CREATE TRIGGER set_timestamp_on_appointment_bookings
+BEFORE UPDATE ON appointment_bookings
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();
+
+CREATE INDEX IF NOT EXISTS idx_appointment_bookings_calendar_id
+  ON appointment_bookings (calendar_id);
+
+CREATE INDEX IF NOT EXISTS idx_appointment_bookings_start_time
+  ON appointment_bookings (start_time);

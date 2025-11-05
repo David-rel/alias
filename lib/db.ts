@@ -173,3 +173,60 @@ export type DbFormAnswerRow = {
   created_at: Date;
   updated_at: Date;
 };
+
+export type DbAppointmentCalendarRow = {
+  id: string;
+  business_id: string;
+  owner_user_id: string;
+  name: string;
+  appointment_type: string;
+  description: string | null;
+  location_type: "in_person" | "virtual" | "phone" | "custom";
+  location_details: string | null;
+  virtual_meeting_preference: string | null;
+  duration_minutes: number;
+  buffer_before_minutes: number;
+  buffer_after_minutes: number;
+  timezone: string;
+  share_id: string;
+  booking_window_days: number;
+  min_schedule_notice_minutes: number;
+  status: "active" | "inactive";
+  requires_confirmation: boolean;
+  google_calendar_sync: boolean;
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type DbAppointmentAvailabilityRuleRow = {
+  id: string;
+  calendar_id: string;
+  rule_type: "weekly" | "date";
+  day_of_week: number | null;
+  specific_date: Date | null;
+  start_minutes: number;
+  end_minutes: number;
+  is_unavailable: boolean;
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type DbAppointmentBookingRow = {
+  id: string;
+  calendar_id: string;
+  created_by_user_id: string | null;
+  share_id: string;
+  guest_name: string;
+  guest_email: string;
+  guest_timezone: string | null;
+  guest_notes: string | null;
+  start_time: Date;
+  end_time: Date;
+  status: "scheduled" | "cancelled" | "completed";
+  meeting_url: string | null;
+  meeting_location: string | null;
+  external_event_id: string | null;
+  external_calendar: string | null;
+  created_at: Date;
+  updated_at: Date;
+};
