@@ -230,3 +230,38 @@ export type DbAppointmentBookingRow = {
   created_at: Date;
   updated_at: Date;
 };
+
+export type DbEventRow = {
+  id: string;
+  business_id: string;
+  created_by_user_id: string | null;
+  title: string;
+  description: string | null;
+  cover_image_url: string | null;
+  event_type: "in_person" | "online" | "hybrid";
+  location_address: string | null;
+  location_details: string | null;
+  virtual_meeting_url: string | null;
+  timezone: string;
+  start_time: Date;
+  end_time: Date;
+  registration_deadline: Date | null;
+  capacity: number | null;
+  share_id: string;
+  status: "draft" | "published" | "completed" | "cancelled";
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type DbEventRegistrationRow = {
+  id: string;
+  event_id: string;
+  attendee_name: string;
+  attendee_email: string;
+  attendee_phone: string | null;
+  notes: string | null;
+  status: "registered" | "cancelled" | "waitlisted" | "checked_in";
+  checked_in_at: Date | null;
+  created_at: Date;
+  updated_at: Date;
+};

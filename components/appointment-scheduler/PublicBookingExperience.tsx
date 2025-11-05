@@ -168,7 +168,7 @@ export function PublicBookingExperience({ calendar, availability }: PublicBookin
     );
 
     return (
-      <main className="min-h-screen bg-gradient-to-br from-[#f5f9ff] via-white to-[#e9f3ff]">
+      <main className="min-h-screen bg-linear-to-br from-[#f5f9ff] via-white to-[#e9f3ff]">
         <section className="mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center gap-8 px-6 py-16 text-center">
           <div className="inline-flex h-20 w-20 items-center justify-center rounded-full bg-[#23a5fe]/20 text-[#0064d6] shadow-[0_14px_45px_rgba(0,100,214,0.25)]">
             <FiCheck className="text-3xl" />
@@ -260,7 +260,7 @@ export function PublicBookingExperience({ calendar, availability }: PublicBookin
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-[#f5f9ff] via-white to-[#e9f3ff]">
+    <main className="min-h-screen bg-linear-to-br from-[#f5f9ff] via-white to-[#e9f3ff]">
       <section className="mx-auto flex max-w-6xl flex-col gap-10 px-6 py-16 lg:flex-row">
         <div className="lg:w-2/5 space-y-6">
           <div className="rounded-3xl border border-[#cde6ff] bg-white p-6 shadow-[0_30px_80px_rgba(15,35,67,0.08)]">

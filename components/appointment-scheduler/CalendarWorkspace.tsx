@@ -288,7 +288,7 @@ export function CalendarWorkspace({
 
   return (
     <div className="space-y-10">
-      <header className="flex flex-col gap-6 rounded-3xl border border-white/10 bg-gradient-to-br from-[#03162d] via-[#052041] to-[#0b3670] p-8 text-white shadow-[0_40px_130px_rgba(3,22,45,0.58)] lg:flex-row lg:items-center lg:justify-between">
+      <header className="flex flex-col gap-6 rounded-3xl border border-white/10 bg-linear-to-br from-[#03162d] via-[#052041] to-[#0b3670] p-8 text-white shadow-[0_40px_130px_rgba(3,22,45,0.58)] lg:flex-row lg:items-center lg:justify-between">
         <div className="space-y-3">
           <p className="text-xs uppercase tracking-[0.4em] text-[#3eb6fd]">
             Calendar overview

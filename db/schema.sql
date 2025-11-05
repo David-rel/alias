@@ -382,3 +382,69 @@ CREATE INDEX IF NOT EXISTS idx_appointment_bookings_calendar_id
 
 CREATE INDEX IF NOT EXISTS idx_appointment_bookings_start_time
   ON appointment_bookings (start_time);
+
+-- Event scheduler tables
+CREATE TABLE IF NOT EXISTS events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  created_by_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  title TEXT NOT NULL,
+  description TEXT,
+  cover_image_url TEXT,
+  event_type TEXT NOT NULL CHECK (event_type IN ('in_person', 'online', 'hybrid')),
+  location_address TEXT,
+  location_details TEXT,
+  virtual_meeting_url TEXT,
+  timezone TEXT NOT NULL,
+  start_time TIMESTAMPTZ NOT NULL,
+  end_time TIMESTAMPTZ NOT NULL,
+  registration_deadline TIMESTAMPTZ,
+  capacity INTEGER CHECK (capacity IS NULL OR capacity >= 1),
+  share_id TEXT NOT NULL UNIQUE,
+  status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'published', 'completed', 'cancelled')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CHECK (end_time > start_time),
+  CHECK (
+    registration_deadline IS NULL
+    OR registration_deadline <= start_time
+  )
+);
+
+CREATE INDEX IF NOT EXISTS idx_events_business_id
+  ON events (business_id);
+
+CREATE INDEX IF NOT EXISTS idx_events_start_time
+  ON events (start_time DESC);
+
+DROP TRIGGER IF EXISTS set_timestamp_on_events ON events;
+CREATE TRIGGER set_timestamp_on_events
+BEFORE UPDATE ON events
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();
+
+CREATE TABLE IF NOT EXISTS event_registrations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+  attendee_name TEXT NOT NULL,
+  attendee_email TEXT NOT NULL,
+  attendee_phone TEXT,
+  notes TEXT,
+  status TEXT NOT NULL DEFAULT 'registered' CHECK (status IN ('registered', 'cancelled', 'waitlisted', 'checked_in')),
+  checked_in_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (event_id, attendee_email)
+);
+
+CREATE INDEX IF NOT EXISTS idx_event_registrations_event_id
+  ON event_registrations (event_id);
+
+CREATE INDEX IF NOT EXISTS idx_event_registrations_status
+  ON event_registrations (status);
+
+DROP TRIGGER IF EXISTS set_timestamp_on_event_registrations ON event_registrations;
+CREATE TRIGGER set_timestamp_on_event_registrations
+BEFORE UPDATE ON event_registrations
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();

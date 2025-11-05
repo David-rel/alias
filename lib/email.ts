@@ -624,3 +624,156 @@ Feel free to pick another slot from the booking link or reply to this email and 
     `,
   });
 }
+
+type EventRegistrationConfirmationOptions = {
+  recipient: string;
+  attendeeName: string;
+  eventTitle: string;
+  businessName: string;
+  startTimeIso: string;
+  endTimeIso: string;
+  timezone: string;
+  locationSummary: string;
+  virtualMeetingUrl?: string;
+};
+
+type EventRegistrationNotificationOptions = {
+  recipient: string;
+  attendeeName: string;
+  attendeeEmail: string;
+  attendeePhone?: string;
+  eventTitle: string;
+  businessName: string;
+  startTimeIso: string;
+  endTimeIso: string;
+  timezone: string;
+  locationSummary: string;
+  notes?: string;
+};
+
+export async function sendEventRegistrationConfirmationEmail(
+  options: EventRegistrationConfirmationOptions
+) {
+  const fromAddress = resolveFromAddress();
+  const timing = formatBookingWindow(
+    options.startTimeIso,
+    options.endTimeIso,
+    options.timezone
+  );
+
+  if (!emailDeliveryConfigured()) {
+    console.warn(
+      "[email] Delivery skipped – configure GMAIL_USER/GMAIL_PASS or SMTP_HOST/SMTP_USER/SMTP_PASS to enable sending."
+    );
+    console.info(
+      `[email] Event confirmation for ${options.recipient}: ${options.eventTitle} on ${timing.dateLabel} ${timing.timeLabel}`
+    );
+    return;
+  }
+
+  const transport = getTransporter();
+
+  await transport.sendMail({
+    from: fromAddress,
+    to: options.recipient,
+    subject: `You're registered for ${options.eventTitle}`,
+    text: `Hi ${options.attendeeName},
+
+You're confirmed for ${options.eventTitle} with ${options.businessName}.
+
+When: ${timing.dateLabel} · ${timing.timeLabel}
+Where: ${options.locationSummary}
+${
+  options.virtualMeetingUrl
+    ? `Join link: ${options.virtualMeetingUrl}
+`
+    : ""
+}
+We’ll send any event updates straight to this email.
+`,
+    html: `
+      <div style="font-family: sans-serif; line-height: 1.6; color: #0f172a;">
+        <h1 style="font-size: 26px; margin-bottom: 12px;">You're in!</h1>
+        <p style="margin: 0 0 16px;">Hi ${options.attendeeName}, you're confirmed for <strong>${options.eventTitle}</strong> with ${options.businessName}.</p>
+        <div style="border-radius: 16px; background: linear-gradient(135deg,#f5f9ff,#e6f2ff); padding: 20px 24px; margin-bottom: 16px; border: 1px solid #cfe4ff;">
+          <p style="margin: 0 0 6px; font-weight: 600; color: #0b3a75;">${options.eventTitle}</p>
+          <p style="margin: 0;">${timing.dateLabel}</p>
+          <p style="margin: 4px 0 0;">${timing.timeLabel}</p>
+          <p style="margin: 12px 0 0;">Location: ${options.locationSummary}</p>
+          ${
+            options.virtualMeetingUrl
+              ? `<p style="margin: 8px 0 0;"><a href="${options.virtualMeetingUrl}" style="color: #0064d6;">Join event →</a></p>`
+              : ""
+          }
+        </div>
+        <p style="margin: 0 0 12px;">We'll email you here if anything changes. If you need to update your registration just reply to this message.</p>
+        <p style="margin: 12px 0 0; font-size: 12px; color: #475569;">Sent by Alias events.</p>
+      </div>
+    `,
+  });
+}
+
+export async function sendEventRegistrationNotificationEmail(
+  options: EventRegistrationNotificationOptions
+) {
+  const fromAddress = resolveFromAddress();
+  const timing = formatBookingWindow(
+    options.startTimeIso,
+    options.endTimeIso,
+    options.timezone
+  );
+
+  if (!emailDeliveryConfigured()) {
+    console.warn(
+      "[email] Delivery skipped – configure GMAIL_USER/GMAIL_PASS or SMTP_HOST/SMTP_USER/SMTP_PASS to enable sending."
+    );
+    console.info(
+      `[email] Event registration alert: ${options.attendeeName} for ${options.eventTitle} on ${timing.dateLabel} ${timing.timeLabel}`
+    );
+    return;
+  }
+
+  const transport = getTransporter();
+
+  await transport.sendMail({
+    from: fromAddress,
+    to: options.recipient,
+    replyTo: options.attendeeEmail,
+    subject: `New attendee for ${options.eventTitle}`,
+    text: `${options.attendeeName} (${options.attendeeEmail}${
+      options.attendeePhone ? ` · ${options.attendeePhone}` : ""
+    }) just registered for ${options.eventTitle}.
+
+When: ${timing.dateLabel} · ${timing.timeLabel}
+Location: ${options.locationSummary}
+${
+  options.notes
+    ? `
+Notes: ${options.notes}
+`
+    : ""
+}
+`,
+    html: `
+      <div style="font-family: sans-serif; line-height: 1.6; color: #0f172a;">
+        <h1 style="font-size: 24px; margin-bottom: 12px;">New attendee registered</h1>
+        <p style="margin: 0 0 12px;"><strong>${options.attendeeName}</strong> (<a href="mailto:${options.attendeeEmail}" style="color:#0064d6;">${options.attendeeEmail}</a>${
+      options.attendeePhone
+        ? ` · <a href="tel:${options.attendeePhone}" style="color:#0064d6;">${options.attendeePhone}</a>`
+        : ""
+    }) signed up for <strong>${options.eventTitle}</strong>.</p>
+        <div style="border-radius: 16px; background: #f1f7ff; padding: 18px 22px; margin-bottom: 16px; border: 1px solid #cfe4ff;">
+          <p style="margin: 0;">${timing.dateLabel}</p>
+          <p style="margin: 4px 0 0;">${timing.timeLabel}</p>
+          <p style="margin: 12px 0 0;">Location: ${options.locationSummary}</p>
+        </div>
+        ${
+          options.notes
+            ? `<p style="margin: 0 0 16px;">Attendee notes:<br/><em>${options.notes}</em></p>`
+            : ""
+        }
+        <p style="margin: 0; font-size: 12px; color: #475569;">Sent by Alias events.</p>
+      </div>
+    `,
+  });
+}

@@ -164,16 +164,16 @@ const serviceDefinitions: ServiceDefinition[] = [
       "SMS and email reminders reduce no-shows automatically.",
     ],
   },
-   {
+  {
     id: "event-scheduler",
     label: "Event Scheduler",
     href: "/app/event-scheduler",
-    icon: FiClock,
+    icon: FiUsers,
     summary:
-      "Publish public events.",
+      "Host in-person or virtual experiences with branded registration pages and live check-in tools.",
     highlights: [
-      "Alias Events syncs with Google Calendar and enforces buffer rules.",
-      "SMS and email reminders reduce no-shows automatically.",
+      "Collect RSVPs with capacity rules, waitlists, and automatic confirmations.",
+      "Run day-of check-in boards that sync attendance back to the dashboard in real time.",
     ],
   },
   {
